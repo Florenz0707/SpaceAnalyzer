@@ -2,7 +2,7 @@
 
 ## 当前交付
 
-M1 完成只读扫描和快照业务核心。当前 FastAPI 仍只暴露健康检查，React 仍为初始化页；HTTP 扫描和可视化在 M2、M3 接入。
+M2 已接入扫描与快照 HTTP API，并完成本地静态托管。React 仍为初始化页，可视化在 M3 接入。
 
 ## 环境与安装
 
@@ -30,7 +30,7 @@ pnpm --dir frontend dev
 
 ## 核心存储与只读边界
 
-`SnapshotService` 在调用方指定的应用数据库中保存任务与快照。当前 HTTP 入口尚未实例化该服务，因此启动 API 不创建快照数据库。测试仅在临时目录创建数据库和合成文件。
+`SnapshotService` 在应用数据库中保存任务与快照；HTTP 入口在生命周期内管理服务及数据库连接。测试仅在临时目录创建数据库和合成文件。
 
 同一数据库只运行一个服务实例。扫描仅读取元数据，不跟随链接，排除自身数据库及辅助文件。重启会将未完成任务标记为中断；统计为逻辑大小，不等于系统已用空间。
 
@@ -56,3 +56,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 开发在父目录下的独立 agent-worktree 与功能分支中进行，主目录 dev 用于运行已验收版本。每个任务完成后及时本地提交，Agent 不执行 push 或 pull。完整规范见 `AGENTS.md`。
 
 项目技能位于本地忽略的 `.agents/skills/`，新工作树单独同步，来源与哈希见 `doc/SKILLS.md` 和 `doc/skills-lock.json`。
+
+## M2 API 与数据配置
+
+HTTP 入口现在装配 SnapshotService；默认数据库为项目 `data/snapshots.sqlite3`，可通过 `SPACEANALYZER_DATABASE` 设置。每个数据库仅允许一个应用进程，监听 `127.0.0.1`。
+
+API 使用 `/api` 前缀，包含扫描创建与取消、任务进度、快照详情、目录分页和错误记录。扫描运行于后台线程，响应模型和本地来源约束由契约测试验证。前端生产产物存在时可由后端托管；本阶段页面仍为初始化页，完整快照操作界面在 M3 提供。
