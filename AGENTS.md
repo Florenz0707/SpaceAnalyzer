@@ -14,7 +14,7 @@
 
 - 开发任务在独立的 agent-worktree 中执行，目录位于项目父目录下，默认使用 `D:/SpaceAnalyzer-agent-worktree`。主工作目录 `D:/SpaceAnalyzer` 用于本地运行开发版本。
 - 常驻分支为 `main`、`dev`、`idle`，各自职责固定，不删除或混用。
-- `main` 跟踪 `origin/main`，始终与远端同步，不直接承载本地功能开发。操作前获取远端状态，仅使用快进更新；发现分叉时先处理原因，不强制重置或覆盖远端。
+- `main` 保存由用户手动同步的远端基线，不直接承载本地功能开发。Agent 不执行任何 `git push` 或 `git pull`，远端同步由用户负责；不同步时保留本地状态并说明差异，不强制重置或覆盖远端。
 - `dev` 保存本地运行的开发版本，主工作目录通常检出 `dev`。需要更新运行版本时，将已验收的 `idle` 版本合并到 `dev`。
 - agent-worktree 空闲时保持 `idle`。开始修改前，从 `idle` 创建并切换到独立功能分支，例如 `feat/snapshot-scanner`、`fix/scan-cancellation` 或 `chore/tooling`；不直接在 `idle` 上开发。
 - 完成修改、检查与验收后，将功能分支合并到 `idle`，并让 agent-worktree 切回 `idle`。验收未通过时保留功能分支及现场，不提前合并。
@@ -32,7 +32,7 @@
 - Persist scan errors and aggregate logical sizes
 ```
 
-提交与推送按用户授权执行；合并前完成规定检查，不跳过提交 hook，不将缓存、真实磁盘数据或凭据加入提交。
+提交按用户授权执行；Agent 不执行任何 push 或 pull 操作。合并前完成规定检查，不跳过提交 hook，不将缓存、真实磁盘数据或凭据加入提交。
 
 ## 修改后必须验证
 

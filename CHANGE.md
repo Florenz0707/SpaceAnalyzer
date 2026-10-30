@@ -6,6 +6,8 @@
 
 ### 2026-10-30
 
+- 明确禁止 Agent 执行 push 或 pull，远端同步改由用户手动完成；本地开发遵守独立工作树与功能分支流程。
+
 - 约定在项目父目录的独立 agent-worktree 中开发，固定 main/dev/idle 分支职责、功能分支验收合并流程及 `[xxx] brief message` 提交格式。
 - 将 `scripts/` 的 Python 编排脚本替换为 PowerShell/Bash 两套检查入口，pre-commit 直接调用项目工具；同步 VS Code 任务、类型检查范围与执行文档。
 - 按用户确认安装 9 个项目级 skills，固定上游 commit，保留完整引用文件与许可证，记录文件哈希及 Windows/文档路径适配约定。

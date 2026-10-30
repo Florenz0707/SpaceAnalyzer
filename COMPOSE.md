@@ -23,7 +23,7 @@
 
 ## 安装
 
-主目录 `D:/SpaceAnalyzer` 使用 `dev` 分支保存本地运行版本；开发修改在同级 `D:/SpaceAnalyzer-agent-worktree` 的功能分支中进行，空闲时该工作树检出 `idle`。`main` 跟踪远端主分支。具体流程见 `AGENTS.md`。
+主目录 `D:/SpaceAnalyzer` 使用 `dev` 分支保存本地运行版本；开发修改在同级 `D:/SpaceAnalyzer-agent-worktree` 的功能分支中进行，空闲时该工作树检出 `idle`。`main` 保存用户手动同步的远端主分支基线；Agent 不执行 push 或 pull。具体流程见 `AGENTS.md`。
 
 每个工作树独立安装依赖，不复制其他工作树的 `.venv` 或 `node_modules`。本地忽略的 `.agents/skills/` 不会随 `git worktree add` 自动复制；需要同步既有技能并核验 `doc/skills-lock.json`，或按清单的固定版本安装。
 
