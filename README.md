@@ -4,9 +4,9 @@
 
 ## 当前状态
 
-仓库已建立前后端基础工程、质量检查与测试入口。目前提供初始化页面和 `GET /api/health` 健康检查；尚未实现磁盘扫描、SQLite 快照存储、矩形树图或模型对话。
+M1 已实现只读元数据扫描、SQLite 快照保存、单任务取消与中断恢复，以及 SnapshotService 的有界查询。HTTP 入口仍只提供健康检查，前端仍为初始化页面；M2–M4 尚待后续提交。
 
-首期交付目标：选择 Windows 目录或盘符，扫描元数据，保存一次快照，交互式查看逻辑空间分布。扫描期间的错误、起止时间和统计口径必须可见。执行顺序及验收条件见 [执行计划](doc/PLAN.md)。
+测试使用合成目录。公开接口与验证范围见 [M1-SPEC.md](doc/M1-SPEC.md)，执行顺序见 [PLAN.md](doc/PLAN.md)。
 
 ## 约束
 
@@ -19,7 +19,7 @@
 
 ## 技术与目录
 
-前端使用 TypeScript、React、Vite 和 pnpm，后端使用 Python、FastAPI 和 uv。SQLite 在快照阶段引入。开发时通过 Vite 代理访问 API。
+前端使用 TypeScript、React、Vite 和 pnpm，后端使用 Python、FastAPI 和 uv。SQLite 已用于快照核心存储。开发时通过 Vite 代理访问 API。
 
 ```text
 backend/             Python 依赖、API 源码、测试与 uv.lock
