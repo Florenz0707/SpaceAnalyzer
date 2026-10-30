@@ -203,7 +203,13 @@ export default function Workspace() {
               className="secondary"
               onClick={() =>
                 void request<Job>(`/scans/${job!.id}/cancel`, {})
-                  .then(setJob)
+                  .then(async (result) => {
+                    setJob(result);
+                    if (!isActive(result.status)) {
+                      await refresh();
+                      await openSnapshot(result.snapshot_id);
+                    }
+                  })
                   .catch((cause: Error) => setError(cause.message))
               }
             >
