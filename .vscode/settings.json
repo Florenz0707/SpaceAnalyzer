@@ -1,0 +1,61 @@
+{
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "prettier.requireConfig": true,
+  "prettier.prettierPath": "./frontend/node_modules/prettier",
+  "prettier.configPath": ".prettierrc.json",
+  "prettier.ignorePath": ".prettierignore",
+  "eslint.workingDirectories": ["./frontend"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv",
+  "python.analysis.typeCheckingMode": "strict",
+  "python.analysis.extraPaths": ["${workspaceFolder}/backend/src"],
+  "python.analysis.exclude": [
+    "**/node_modules",
+    "**/.venv",
+    "**/.cache",
+    "**/dist"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}/backend",
+  "python.testing.pytestArgs": ["tests"],
+  "ruff.path": ["${workspaceFolder}/backend/.venv/Scripts/ruff.exe"],
+  "ruff.configuration": "${workspaceFolder}/backend/pyproject.toml",
+  "ruff.importStrategy": "fromEnvironment",
+  "markdownlint.configFile": "${workspaceFolder}/.markdownlint.yaml",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.tabSize": 4,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "explicit"
+    }
+  },
+  "search.exclude": {
+    "**/.cache": true,
+    "**/uv.lock": true,
+    "**/pnpm-lock.yaml": true
+  }
+}

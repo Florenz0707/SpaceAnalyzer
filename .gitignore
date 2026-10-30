@@ -1,0 +1,40 @@
+# Dependencies and environments
+node_modules/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Generated output and tool caches
+dist/
+build/
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.cache/
+*.tsbuildinfo
+output/
+
+# Application data and secrets
+.env
+.env.*
+!.env.example
+data/
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.db
+*.db-*
+*.log
+
+# Local editor and OS state
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+.DS_Store
+Thumbs.db

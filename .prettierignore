@@ -1,0 +1,8 @@
+**/node_modules/
+**/.venv/
+**/dist/
+**/coverage/
+.cache/
+.agents/skills/
+frontend/pnpm-lock.yaml
+backend/uv.lock

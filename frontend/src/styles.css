@@ -1,0 +1,33 @@
+:root {
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  color: #253444;
+  background: #f3f6f9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 960px;
+  margin: 64px auto;
+  padding: 0 24px;
+}
+
+h1 {
+  font-size: clamp(2rem, 6vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+section {
+  margin-top: 40px;
+  padding: 24px;
+  border-left: 4px solid #3073b5;
+  background: white;
+}
+
+p {
+  line-height: 1.8;
+}
