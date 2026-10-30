@@ -91,3 +91,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1 -Hook fron
 已按用户确认将 9 个技能安装到 `.agents/skills/`：`frontend-design`、`playwright`、`security-best-practices`、`codebase-design`、`tdd`、`diagnosing-bugs`、`domain-modeling`、`writing-for-agents`、`prototype`。
 
 使用场景、项目适配及后续候选见 [skills 文档](doc/SKILLS.md)，固定来源与文件哈希见 [skills-lock.json](doc/skills-lock.json)。技能保存在本地工作树，当前被 `.agents/.gitignore` 忽略，新工作树需单独同步，没有全局安装；新增技能在后续会话中加载。本机 Playwright CLI 的 Windows 帮助命令已验证，浏览器运行按需验证。
+
+## Windows 回收站提示
+
+扫描卷根的 `$RECYCLE.BIN` 或其子目录时，保留所有可读内容的逻辑大小，不跟随链接或自动提权。回收站中的链接/重解析点跳过、权限拒绝在扫描结束（含取消）时分别合并为一条提示，并显示各自实际发生次数；其他错误保留逐条记录。
+
+存在遗漏时仍为部分快照，已读大小不代表回收站完整占用，未知占用不按零计算。`error_count` 表示保存的提示记录数，合并组中的条目数见提示正文。此策略仅适用于 Windows 卷根回收站，普通路径中的同名目录不合并。
+
+新建快照采用策略版本 2；旧快照保持原有数据，需要重新创建快照才能应用新策略。复现与验证范围见 [回收站修复记录](doc/RECYCLE-BIN-FIX.md)。

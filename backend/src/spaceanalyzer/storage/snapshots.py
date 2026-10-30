@@ -132,8 +132,8 @@ class SnapshotStore:
                 (job_id, snapshot_id, root, timestamp),
             )
             connection.execute(
-                "INSERT INTO snapshots(id, job_id, root_path, "
-                "status, created_at) VALUES(?, ?, ?, 'queued', ?)",
+                "INSERT INTO snapshots(id, job_id, root_path, policy_version, "
+                "status, created_at) VALUES(?, ?, ?, 2, 'queued', ?)",
                 (snapshot_id, job_id, root, timestamp),
             )
         return self.job(job_id)

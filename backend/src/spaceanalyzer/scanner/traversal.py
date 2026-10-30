@@ -6,7 +6,7 @@ import os
 import stat
 from collections.abc import Iterator
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from threading import Event
 from typing import Protocol
 
@@ -97,6 +97,36 @@ def validate_root(raw: str) -> str:
 
 
 def scan_directory(
+    root: str, excluded: set[str], cancelled: Event
+) -> Iterator[ScanEvent]:
+    """Keep readable recycle-bin data, grouping expected boundary omissions."""
+    summaries: dict[tuple[str, str], int] = {}
+    for event in _scan_directory(root, excluded, cancelled):
+        if isinstance(event, Issue) and os.name == "nt":
+            path = PureWindowsPath(event.path)
+            if (
+                path.is_absolute()
+                and len(path.parts) >= 2
+                and path.parts[1].casefold() == "$recycle.bin"
+                and event.code in {"reparse_point", "PermissionError"}
+            ):
+                key = (str(PureWindowsPath(*path.parts[:2])), event.code)
+                summaries[key] = summaries.get(key, 0) + 1
+                continue
+        yield event
+    # Flush on normal completion or cancellation; traversal already marked totals
+    # incomplete. Memory is bounded by volume and these two known issue codes.
+    for (path, code), count in summaries.items():
+        reason = "链接/重解析点未跟随" if code == "reparse_point" else "权限不足"
+        yield Issue(
+            path,
+            code,
+            f"回收站汇总：{count} 项{reason}。可读内容已计入；"
+            "未读取内容的占用未知，快照不完整。未提权或修改权限。",
+        )
+
+
+def _scan_directory(
     root: str, excluded: set[str], cancelled: Event
 ) -> Iterator[ScanEvent]:
     info = os.lstat(io_path(root))

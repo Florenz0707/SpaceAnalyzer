@@ -309,3 +309,143 @@ def test_prepared_windows_symbolic_link_is_not_followed(tmp_path: Path) -> None:
         after.st_mtime_ns,
         after.st_mode,
     )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Synthetic Windows volume paths")
+@pytest.mark.parametrize(
+    ("scan_subdirectory", "cancel"),
+    [
+        ("", False),
+        ("$recycle.bin", False),
+        ("$recycle.bin/S-1-test", False),
+        ("$recycle.bin", True),
+    ],
+)
+def test_recycle_bin_groups_boundary_issues_but_keeps_readable_sizes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    scan_subdirectory: str,
+    cancel: bool,
+) -> None:
+    # All filesystem calls for the virtual volume are redirected to this fixture.
+    # No real volume or user recycle bin is accessed, and links need no privileges.
+    volume = tmp_path / "volume"
+    recycle = volume / "$recycle.bin" / "S-1-test"
+    recycle.mkdir(parents=True)
+    (recycle / "kept.bin").write_bytes(b"abc")
+    for index in range(100):
+        (recycle / f"{index}.link").touch()
+    for index in range(4):
+        (recycle / f"{index}.denied").touch()
+    (volume / "ordinary.denied").touch()
+    (recycle / "vanished.bin").touch()
+    original_lstat, original_scandir = os.lstat, os.scandir
+    entered, release = Event(), Event()
+
+    def mapped(path: str | os.PathLike[str]) -> str:
+        raw = str(path).removeprefix("\\\\?\\")
+        if raw.upper().startswith("V:\\"):
+            return str(volume / raw[3:])
+        return str(path)
+
+    def metadata(
+        path: str | os.PathLike[str], *args: Any, **kwargs: Any
+    ) -> os.stat_result:
+        raw = str(path)
+        if raw.endswith("vanished.bin"):
+            raise FileNotFoundError("Synthetic disappearing recycle entry")
+        if raw.endswith(".denied"):
+            raise PermissionError("Synthetic access denied")
+        info = original_lstat(mapped(path), *args, **kwargs)
+        if raw.endswith(".link"):
+            if cancel and not entered.is_set():
+                entered.set()
+                if not release.wait(5):
+                    raise TimeoutError("Cancellation gate timed out")
+            values = list(info)
+            values[0] = (
+                0o120777  # Synthetic symlink mode; its target must not be opened.
+            )
+            return os.stat_result(values)
+        return info
+
+    def entries(path: str) -> Any:
+        assert not str(path).endswith(".link"), "Link targets must not be traversed"
+        return original_scandir(mapped(path))
+
+    monkeypatch.setattr(os, "lstat", metadata)
+    monkeypatch.setattr(os, "scandir", entries)
+    root = "V:\\" + scan_subdirectory.replace("/", "\\")
+    with SnapshotService(tmp_path / "state.sqlite3") as service:
+        job = service.start_scan(root)
+        if cancel:
+            try:
+                assert entered.wait(5)
+                service.cancel_scan(job.id)
+            finally:
+                release.set()
+        snapshot_id = wait_for_scan(service, job.id)
+        if cancel:
+            snapshot = service.get_snapshot(snapshot_id)
+            assert snapshot.status == "cancelled"
+            assert 0 <= snapshot.total_bytes <= 3
+            issues = service.list_errors(snapshot_id)
+            links = [issue for issue in issues.items if issue.code == "reparse_point"]
+            assert len(links) == 1
+            assert links[0].path.lower() == "v:\\$recycle.bin"
+            assert "1 项" in links[0].message
+            assert snapshot.error_count == issues.total
+            return
+        snapshot = service.get_snapshot(snapshot_id)
+        assert snapshot.total_bytes == 3
+        assert snapshot.file_count == 1
+        assert snapshot.status == "completed_with_errors"
+        issues = service.list_errors(snapshot_id)
+        grouped = [
+            issue for issue in issues.items if issue.path.lower() == "v:\\$recycle.bin"
+        ]
+        assert len(grouped) == 2
+        messages = {issue.code: issue.message for issue in grouped}
+        assert "100" in messages["reparse_point"]
+        assert "4" in messages["PermissionError"]
+        assert issues.total == (4 if not scan_subdirectory else 3)
+        assert any(
+            issue.code == "FileNotFoundError" and issue.path.endswith("vanished.bin")
+            for issue in issues.items
+        )
+        assert snapshot.error_count == issues.total
+        assert snapshot.policy_version == 2
+        children = service.list_children(snapshot_id, 1).items
+        directories = [item for item in children if item.kind == "directory"]
+        assert all(not item.readable for item in directories)
+
+
+def test_nested_recycle_named_directory_keeps_individual_errors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "$RECYCLE.BIN"
+    root.mkdir()
+    (root / "denied.bin").touch()
+    original = os.lstat
+
+    def denied(
+        path: str | os.PathLike[str], *args: Any, **kwargs: Any
+    ) -> os.stat_result:
+        if str(path).endswith("denied.bin"):
+            raise PermissionError("Synthetic access denied")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "lstat", denied)
+    database = tmp_path / "state.sqlite3"
+    with SnapshotService(database) as service:
+        snapshot_id = wait_for_scan(service, service.start_scan(str(root)).id)
+        issue = service.list_errors(snapshot_id).items[0]
+        assert issue.path == str(root / "denied.bin")
+        assert issue.message == "Synthetic access denied"
+        assert service.get_snapshot(snapshot_id).status == "completed_with_errors"
+    with SnapshotService(database) as service:
+        assert service.get_snapshot(snapshot_id).policy_version == 2
+        assert (
+            service.list_errors(snapshot_id).items[0].message
+            == "Synthetic access denied"
+        )
