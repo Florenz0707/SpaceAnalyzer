@@ -4,9 +4,9 @@
 
 ## 当前状态
 
-M3 已接入快照工作区：扫描进度、历史列表、Canvas 矩形树图、目录下钻、分页明细、错误和只读详情。取消接口立即返回终态时的部分快照刷新问题已独立修复并补充回归，见 [验收记录](doc/CANCEL-ACCEPTANCE.md)。M4 规模验收尚待后续提交。
+当前功能分支已实现本机元数据扫描、SQLite 快照保存、后台单任务、取消与中断恢复、分页 API，以及 Canvas 矩形树图、目录下钻、排序明细、错误提示与历史快照重载。构建后的前端可以由 FastAPI 同源托管。模型对话尚未实现。
 
-测试使用合成目录。公开接口与验证范围见 [M1-SPEC.md](doc/M1-SPEC.md)，执行顺序见 [PLAN.md](doc/PLAN.md)。
+M1–M4 实现与工程验收已完成，包括十万合成文件、128 层目录、真实 Windows 符号链接与取消回归。本轮修改保留在 `D:/SpaceAnalyzer-agent-worktree` 的 `feat/snapshot-core`，已按任务分别本地提交，尚未合并至 idle/dev。已完成证据与范围边界见 [验证记录](doc/M4-VALIDATION.md)，执行顺序见 [执行计划](doc/PLAN.md)。
 
 ## 约束
 
@@ -19,13 +19,13 @@ M3 已接入快照工作区：扫描进度、历史列表、Canvas 矩形树图�
 
 ## 技术与目录
 
-前端使用 TypeScript、React、Vite 和 pnpm，后端使用 Python、FastAPI 和 uv。SQLite 已用于快照核心存储。开发时通过 Vite 代理访问 API。
+前端使用 TypeScript、React、Vite 和 pnpm，后端使用 Python、FastAPI 和 uv。SQLite 保存快照和扫描任务。开发时通过 Vite 代理访问 API。
 
 ```text
 backend/             Python 依赖、API 源码、测试与 uv.lock
 frontend/            前端依赖、页面源码、测试与 pnpm-lock.yaml
 scripts/             PowerShell 与 Bash 质量检查入口
-doc/                 详细执行计划、skills 安装记录与来源清单
+doc/                 执行计划、验收与性能记录、skills 来源清单
 .agents/skills/      已确认安装的项目级技能及上游引用文件
 .vscode/             共享编辑器规范、扩展建议与检查任务
 AGENTS.md            项目协作与代码修改约定
@@ -53,7 +53,7 @@ uv run --project backend --frozen uvicorn spaceanalyzer.main:app --host 127.0.0.
 pnpm --dir frontend dev
 ```
 
-访问 <http://127.0.0.1:5173>。详细部署步骤见 [COMPOSE.md](COMPOSE.md)。
+访问 <http://127.0.0.1:5173>。界面输入目录后才开始扫描，不自动扫描用户磁盘。也可以先执行 `pnpm --dir frontend build`，再仅启动后端，通过 <http://127.0.0.1:8000> 使用完整界面。详细步骤及数据库配置见 [COMPOSE.md](COMPOSE.md)。
 
 ## 质量检查
 

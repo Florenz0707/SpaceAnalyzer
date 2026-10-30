@@ -1,0 +1,22 @@
+{
+  "shape": "deep",
+  "requested_files": 128,
+  "environment": {
+    "os": "Windows-10-10.0.26100-SP0",
+    "cpu": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "logical_cpus": "20",
+    "python": "3.11.5"
+  },
+  "generation_seconds": 0.04714699999021832,
+  "scan_seconds": 0.04257210000650957,
+  "query_median_ms": 1.5186999953584746,
+  "query_p95_ms": 1.6192000039154664,
+  "peak_process_bytes": 32088064,
+  "memory_scope": "process lifetime peak including fixture generation",
+  "database_bytes": 151552,
+  "status": "completed",
+  "file_count": 128,
+  "directory_count": 129,
+  "total_bytes": 128,
+  "error_count": 0
+}

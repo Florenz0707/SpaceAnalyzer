@@ -1,0 +1,13 @@
+{
+  "samples": 20,
+  "layoutMedianMs": 0,
+  "layoutP95Ms": 0,
+  "paintMedianMs": 0.20000000298023224,
+  "paintP95Ms": 0.29999999701976776,
+  "rows": 200,
+  "domNodes": 1267,
+  "canvases": 1,
+  "jsHeapBytes": 4953812,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "note": "100000 equal one-byte files; 200 loaded rows; tiny and unloaded items aggregate into one rectangle; paint measures CPU command submission, not GPU completion"
+}
