@@ -20,8 +20,8 @@
     "typescript",
     "typescriptreact"
   ],
-  "typescript.tsdk": "frontend/node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
   "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv",
   "python.analysis.typeCheckingMode": "strict",
   "python.analysis.extraPaths": ["${workspaceFolder}/backend/src"],

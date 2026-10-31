@@ -2,9 +2,9 @@
 
 ## 部署方式
 
-首期采用 Windows 本机双进程：Python API 访问本机文件系统，浏览器通过 Vite 开发服务访问页面。当前无需 Docker Compose；容器只能看到挂载进去的路径，不作为本机磁盘扫描的默认运行方式。
+支持 Windows 本机开发双进程和构建后的单进程运行：开发时通过 Vite 代理访问 API，构建后由 FastAPI 同源托管前端。当前无需 Docker Compose；容器只能看到挂载路径，不作为本机磁盘扫描的默认运行方式。
 
-本文件名按项目约定保留为 `COMPOSE.md`，内容描述实际支持的运行方式。后续单进程托管前端静态资源尚未实现。
+本文件名按约定保留为 `COMPOSE.md`。本轮功能位于 `D:/SpaceAnalyzer-agent-worktree` 的 `test/deepseek-acceptance`，包含 M1–M4 及 M5 对话实现；M5 真实模型联调待用户配置，已按任务分别本地提交，尚未合并至主目录 dev；体验本轮功能时应先进入该工作树。
 
 ## 环境要求
 
@@ -67,7 +67,24 @@ pnpm --dir frontend preview
 
 构建产物位于 `frontend/dist/`，预览固定监听 <http://127.0.0.1:4173>，同样将 `/api` 代理到 `127.0.0.1:8000`，因此需要后端进程保持运行。预览用于检查静态构建，不能将开发或预览服务视为生产部署方案。
 
-当前不提供安装包、开机启动、远程部署或容器镜像。后续交付计划是在不引入外部服务的前提下由 FastAPI 托管构建产物。
+当前不提供安装包、开机启动、远程部署或容器镜像。构建产物已可由 FastAPI 托管，无需额外前端进程。
+
+## 单进程本机运行
+
+先在功能工作树根目录安装依赖并构建，然后启动一个后端进程：
+
+```powershell
+pnpm --dir frontend build
+uv run --project backend --frozen uvicorn spaceanalyzer.main:app --host 127.0.0.1 --port 8000
+```
+
+访问 <http://127.0.0.1:8000>。输入本机绝对目录路径或盘符根目录，点击“创建快照”；扫描结束后可下钻、返回、查看详情与遗漏记录。刷新或重启后可从快照列表重新打开，旧快照不会隐式重新扫描。
+
+首期拒绝 UNC、扫描根及其祖先中的链接/重解析路径；硬链接按目录项累计逻辑大小。扫描中的文件变化、权限和平台覆盖限制见 `doc/M4-VALIDATION.md`。目录选择目前通过路径输入完成，不提供系统目录浏览器。
+
+同一个数据库只运行一个后端实例，不配置多进程 workers。`queued` 或 `running` 的遗留任务在下次启动时标记为中断失败；正常关闭会请求取消并等待任务释放资源。对失败、取消和有错误的快照显示部分快照提示，不将其视为完整结果。
+
+静态文件来自 `frontend/dist/`，未知 API 保持 JSON 404，页面路由可回退到 index，缺失 JS/图片等资源不会回退为 HTML。对外仅使用回环监听，API 校验本机 Host/Origin；不要将其作为远程共享服务部署。
 
 ## 检查与编辑器
 
@@ -115,7 +132,11 @@ Playwright 技能文件安装不等同于浏览器安装；目前仅验证了固
 
 ## 数据与权限
 
-当前阶段不创建应用数据库。后续数据库默认位于项目自身 `data/` 目录，自动排除自身数据库及辅助文件，不提交数据库、真实磁盘快照或绝对路径日志。
+数据库默认位于当前代码工作树的 `data/snapshots.sqlite3`，服务启动时创建或迁移，但不自动扫描。可在启动前设置 `SPACEANALYZER_DATABASE` 为自己的应用数据库绝对路径；扫描自动排除这一个数据库及其 WAL/SHM/journal 文件。数据库和快照不提交到 Git。
+
+```powershell
+$env:SPACEANALYZER_DATABASE = 'D:\SpaceAnalyzer-agent-worktree\data\snapshots.sqlite3'
+```
 
 始终以普通用户运行。无法访问的目录由后续扫描器记录为错误，不通过提权或修改 ACL 绕过。对被分析内容不执行写入操作。模型服务与凭据尚未接入。
 
@@ -128,3 +149,47 @@ Playwright 技能文件安装不等同于浏览器安装；目前仅验证了固
 - hook 报依赖缺失：先运行依赖安装命令；所有 hook 使用项目依赖，不自动临时下载检查器。
 - 格式化反复变动：确认 VS Code 使用项目 Prettier、Ruff 与共享 Markdown 配置，停用工作区中冲突的格式化器。
 - 端口占用：停止已有进程，或同步调整启动参数和 `frontend/vite.config.ts` 的代理配置。
+
+## 回收站错误汇总
+
+重新启动本轮修复后的后端，再创建新快照以使用策略版本 2。无需迁移数据库结构；已保存的策略版本 1 快照不会重写。回收站可读内容继续计入占用，链接与权限遗漏分别在扫描结束或取消时汇总，未知占用保持不完整标记，不修改系统权限。
+
+错误列表展示保存的记录数量：例如 100 次链接跳过与 4 次权限拒绝显示为两条汇总，正文保留 100 和 4。扫描期间汇总尚未写入；其他类型错误仍按原方式展示。普通目录中的同名文件夹不应用该规则。
+
+## M5 模型配置与验收
+
+后端默认读取当前代码工作树中的 `backend/config/models.toml`。仓库提供 `backend/config/models.example.toml` 模板，本轮已在 agent-worktree 创建禁用状态的本地配置。其他工作树首次使用时复制模板：
+
+```powershell
+Copy-Item backend/config/models.example.toml backend/config/models.toml
+```
+
+编辑本地文件中的 `model_id`，将对应 `enabled` 改为 true，再重启后端。Ollama 地址和上下文预算也在同一文件配置。DeepSeek API Key 仍只从后端环境变量 `DEEPSEEK_API_KEY` 读取，配置文件不允许内嵌密钥字段。
+
+优先级为：环境变量 > 本地 TOML > 默认值。已有环境变量可以覆盖文件中的模型选择与预算；将对应 MODEL 环境变量设为空可显式禁用条目。可通过 `SPACEANALYZER_MODELS_FILE` 指定其他 TOML 路径；相对路径相对于启动目录。修改配置需要重启，不做热加载。本地 `models.toml` 被 Git 忽略，模板随仓库提交；不提交用户模型选择或密钥。非法 TOML 给出脱敏诊断，仍允许扫描运行。
+
+也可以继续使用环境变量：后端读取 `SPACEANALYZER_DEEPSEEK_MODEL` 与 `DEEPSEEK_API_KEY`，以及 `SPACEANALYZER_OLLAMA_MODEL`、可选的 `SPACEANALYZER_OLLAMA_URL`（默认 `http://127.0.0.1:11434`）。密钥只保留在后端进程环境，不发给前端或写入数据库。默认不配置任何模型，不自动调用付费接口或下载模型。
+
+Ollama 仅允许回环 HTTP 地址与本地 completion 模型，拒绝已声明的云端模型；实际联网与模型能力仍需集成测试。无效配置只禁用对应条目，不影响扫描。调整环境变量后重启后端。实际配置由用户在真实联调阶段准备，禁止在聊天、文档或 Git 中填写密钥。
+
+模型预算使用 `SPACEANALYZER_OLLAMA_CONTEXT_WINDOW`（默认请求 8192）、`SPACEANALYZER_OLLAMA_MAX_OUTPUT_TOKENS`（默认 2048），DeepSeek 对应变量为 `SPACEANALYZER_DEEPSEEK_CONTEXT_WINDOW`（默认未知）和 `SPACEANALYZER_DEEPSEEK_MAX_OUTPUT_TOKENS`（默认 2048）。本轮 workflow 单次实际输出上限为 2048，并限制输入至 24000 UTF-8 字节预算，预留输出与协议开销；这是保守应用预算，不是精确 tokenizer 计数。小上下文模型可能因证据超预算被明确拒绝，不静默截断。
+
+Ollama 请求显式发送 num_ctx，默认 8192 是应用请求值，不代表已确认模型或硬件支持。根据实际模型和内存调整，本地最大允许 65536；模型详情声明更小上限时拒绝请求。真实联调前需确认模型名称、Ollama 地址和可用上下文窗口。
+
+M5 对话与快照保存在同一应用数据库中，chat_meta 单独维护对话结构版本，不改变快照 schema 版本。对话含问题、回答、证据和使用量，数据库仍作为本地用户数据排除 Git。每个数据库仅运行一个后端实例，重启后的未完成分析标记为中断失败，不自动重试。
+
+在当前终端设置并替换模型名称后启动后端；应用不自动读取 .env 文件：
+
+```powershell
+$env:SPACEANALYZER_OLLAMA_MODEL = '<本地已安装的模型名称>'
+$env:SPACEANALYZER_OLLAMA_CONTEXT_WINDOW = '8192'
+$env:SPACEANALYZER_DEEPSEEK_MODEL = '<DeepSeek API 模型 ID>'
+# DEEPSEEK_API_KEY 由用户在本机当前终端设置，勿贴到聊天或提交仓库。
+uv run --project backend --frozen uvicorn spaceanalyzer.main:app --host 127.0.0.1 --port 8000
+```
+
+可以只配置其中一家供应商；未安装 Ollama 模型时请自行准备，应用不自动拉取。配置错误在 `/api/models` 中返回脱敏诊断。显式 POST `/api/models/{key}/check` 可以检查连接，真正生成仍需合成快照上的联调。
+
+对话事件 GET `/api/runs/{id}/events?after=<序号>` 返回 SSE，也接受 Last-Event-ID。断线重连只重放已保存事件；显式取消调用 POST `/api/runs/{id}/cancel`。上游是否立即停止计算或计费不能由本地取消保证。首版不自动重试生成；失败后用户再次提交使用新的请求键。
+
+本次 DeepSeek 联调发现 Windows 进程/用户级 DEEPSEEK_API_KEY 为旧凭据（401），系统级另有有效凭据。用户环境变量可能覆盖系统变量，已经运行的进程还可能保留旧值。常规后端需要在启动终端中明确设置正确凭据并重启；不要打印值。应用不自动选择其他环境作用域，也不修改用户/系统变量。隔离验收临时使用有效系统级凭据，不能据此认为普通启动已自动修复。

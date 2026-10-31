@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-30",
+  "scenario": "cancellation response immediately returns cancelled",
+  "environment": "isolated Chrome, built frontend, loopback service",
+  "boundary": "fixed HTTP responses; no filesystem scan",
+  "history_updated": true,
+  "partial_snapshot_visible": true,
+  "partial_file_visible": true,
+  "console_errors": 0,
+  "console_warnings": 0,
+  "screenshot": "output/playwright/cancel/cancelled.png"
+}

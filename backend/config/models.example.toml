@@ -1,0 +1,19 @@
+# Copy to models.toml and fill model_id, then set enabled = true.
+# Restart the backend after editing. Environment variables override this file.
+# API keys must stay in environment variables, never in this file.
+version = 1
+
+[deepseek_api]
+enabled = false
+model_id = ""
+# Set DEEPSEEK_API_KEY in the backend process environment.
+# context_window = 131072  # Optional; use the actual model's supported budget.
+max_output_tokens = 2048
+
+[ollama]
+enabled = false
+model_id = ""
+base_url = "http://127.0.0.1:11434"
+# Requested context, not a guarantee of model/hardware support.
+context_window = 8192
+max_output_tokens = 2048

@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-31",
+  "provider": "deepseek_api",
+  "model": "deepseek-flash",
+  "status": "passed_for_tested_synthetic_scenarios",
+  "credential_diagnostics": {
+    "process_and_user_http": 401,
+    "machine_http": 200,
+    "persistent_environment_modified": false
+  },
+  "expected_total_bytes": 3146759,
+  "largest_file": {
+    "node_id": 8,
+    "bytes": 2097152
+  },
+  "largest_root_directory": {
+    "node_id": 7,
+    "bytes": 2097152
+  },
+  "checks": {
+    "only_deepseek_registered": true,
+    "scan_started": true,
+    "known_snapshot_counts": true,
+    "cloud_consent_required": true,
+    "analysis_started": true,
+    "utf8_question_preserved": true,
+    "request_idempotency": true,
+    "responsive_during_generation": true,
+    "concurrent_run_rejected": true,
+    "run_1_completed": true,
+    "run_1_cited_evidence": true,
+    "total_fact_correct": true,
+    "largest_file_correct": true,
+    "largest_directory_correct": true,
+    "run_2_completed": true,
+    "run_2_cited_evidence": true,
+    "followup_percentage_correct": true,
+    "prior_answer_in_followup_context": true,
+    "cloud_context_redacted": true,
+    "cancel_after_text": true,
+    "event_replay_order": true,
+    "replay_does_not_regenerate": true,
+    "history_saved": true,
+    "browser_real_generation": true,
+    "browser_citation_navigation": true,
+    "browser_reload_history": true,
+    "browser_mobile_no_overflow": true,
+    "partial_snapshot_uncertainty": true,
+    "all_requests_redacted": true,
+    "fixture_metadata_unchanged_during_partial_test": true,
+    "history_after_server_restart": true,
+    "restart_did_not_regenerate": true
+  },
+  "workflow_generation_requests": 5,
+  "completed_workflow_requests": 4,
+  "cancelled_workflow_requests": 1,
+  "completed_workflow_usage": {
+    "input_tokens": 6052,
+    "output_tokens": 201
+  },
+  "cancelled_usage": null,
+  "minimal_probe_usage": {
+    "input_tokens": 9,
+    "output_tokens": 1
+  },
+  "sampled_run_elapsed_seconds": [1.14, 1.016],
+  "sampled_first_visible_text_seconds": [0.656, 0.844],
+  "chrome_console_errors": 0,
+  "chrome_console_warnings": 0,
+  "mobile_viewport_width": 390,
+  "mobile_no_horizontal_overflow": true,
+  "limitations": [
+    "Other models and arbitrary answers not guaranteed",
+    "Ollama content acceptance remains blocked",
+    "Normal backend credential environment still requires correction"
+  ]
+}
