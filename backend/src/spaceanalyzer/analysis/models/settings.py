@@ -2,7 +2,12 @@
 
 import os
 from collections.abc import Mapping
+from pathlib import Path
 
+from spaceanalyzer.analysis.models.configuration import (
+    DEFAULT_MODELS_FILE,
+    file_environment,
+)
 from spaceanalyzer.analysis.models.contracts import ModelCapacity, ModelSpec
 from spaceanalyzer.analysis.models.deepseek import DeepSeekAdapter
 from spaceanalyzer.analysis.models.ollama import OllamaAdapter
@@ -24,9 +29,29 @@ def capacity(
     return ModelCapacity(context_window=context, max_output_tokens=output)
 
 
-def load_registry(environment: Mapping[str, str] | None = None) -> ModelRegistry:
-    env = os.environ if environment is None else environment
+def load_registry(
+    environment: Mapping[str, str] | None = None, *, config_path: Path | None = None
+) -> ModelRegistry:
+    supplied = os.environ if environment is None else environment
     registry = ModelRegistry()
+    selected = config_path
+    if selected is None and supplied.get("SPACEANALYZER_MODELS_FILE"):
+        selected = Path(supplied["SPACEANALYZER_MODELS_FILE"])
+    if selected is None and environment is None:
+        selected = DEFAULT_MODELS_FILE
+    merged: dict[str, str] = {}
+    if selected is not None:
+        try:
+            if selected.exists():
+                merged = file_environment(selected)
+            elif selected != DEFAULT_MODELS_FILE:
+                registry.diagnostics.append("Model configuration file not found")
+        except (OSError, ValueError):
+            registry.diagnostics.append(
+                "Model configuration file invalid; check TOML fields"
+            )
+    merged.update(supplied)
+    env: Mapping[str, str] = merged
     deepseek = env.get("SPACEANALYZER_DEEPSEEK_MODEL", "").strip()
     if deepseek:
         try:

@@ -158,7 +158,17 @@ $env:SPACEANALYZER_DATABASE = 'D:\SpaceAnalyzer-agent-worktree\data\snapshots.sq
 
 ## M5 模型配置（尚待真实联调）
 
-后端读取 `SPACEANALYZER_DEEPSEEK_MODEL` 与 `DEEPSEEK_API_KEY`，以及 `SPACEANALYZER_OLLAMA_MODEL`、可选的 `SPACEANALYZER_OLLAMA_URL`（默认 `http://127.0.0.1:11434`）。密钥只保留在后端进程环境，不发给前端或写入数据库。默认不配置任何模型，不自动调用付费接口或下载模型。
+后端默认读取当前代码工作树中的 `backend/config/models.toml`。仓库提供 `backend/config/models.example.toml` 模板，本轮已在 agent-worktree 创建禁用状态的本地配置。其他工作树首次使用时复制模板：
+
+```powershell
+Copy-Item backend/config/models.example.toml backend/config/models.toml
+```
+
+编辑本地文件中的 `model_id`，将对应 `enabled` 改为 true，再重启后端。Ollama 地址和上下文预算也在同一文件配置。DeepSeek API Key 仍只从后端环境变量 `DEEPSEEK_API_KEY` 读取，配置文件不允许内嵌密钥字段。
+
+优先级为：环境变量 > 本地 TOML > 默认值。已有环境变量可以覆盖文件中的模型选择与预算；将对应 MODEL 环境变量设为空可显式禁用条目。可通过 `SPACEANALYZER_MODELS_FILE` 指定其他 TOML 路径；相对路径相对于启动目录。修改配置需要重启，不做热加载。本地 `models.toml` 被 Git 忽略，模板随仓库提交；不提交用户模型选择或密钥。非法 TOML 给出脱敏诊断，仍允许扫描运行。
+
+也可以继续使用环境变量：后端读取 `SPACEANALYZER_DEEPSEEK_MODEL` 与 `DEEPSEEK_API_KEY`，以及 `SPACEANALYZER_OLLAMA_MODEL`、可选的 `SPACEANALYZER_OLLAMA_URL`（默认 `http://127.0.0.1:11434`）。密钥只保留在后端进程环境，不发给前端或写入数据库。默认不配置任何模型，不自动调用付费接口或下载模型。
 
 Ollama 仅允许回环 HTTP 地址与本地 completion 模型，拒绝已声明的云端模型；实际联网与模型能力仍需集成测试。无效配置只禁用对应条目，不影响扫描。调整环境变量后重启后端。实际配置由用户在真实联调阶段准备，禁止在聊天、文档或 Git 中填写密钥。
 

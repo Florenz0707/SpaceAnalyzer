@@ -104,6 +104,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1 -Hook fron
 
 打开快照后选择“分析此快照”，可在右侧面板选择模型、查看近期会话、发送问题、取消生成并展开证据。证据中的节点可定位到矩形树图对应目录。宽度不足时面板移至下方。
 
-后端已实现 DeepSeek API 和本地 Ollama 的统一适配、固定只读证据 workflow、流式对话与历史保存。默认不配置模型，不自动下载模型或调用云端；配置见 COMPOSE.md。云端会话需要明确勾选外发范围，证据中的文件名和路径移除，但用户输入的文字及近期对话仍会发送。
+后端已实现 DeepSeek API 和本地 Ollama 的统一适配、固定只读证据 workflow、流式对话与历史保存。默认不启用模型，不自动下载模型或调用云端。编辑本地 `backend/config/models.toml`，首次使用可复制 [配置模板](backend/config/models.example.toml)；配置优先级和密钥设置见 COMPOSE.md。云端会话需要明确勾选外发范围，证据中的文件名和路径移除，但用户输入的文字及近期对话仍会发送。
 
 首版只启用内置 disk-overview 分析方法，预留工具与技能契约，尚不开放模型自主工具循环。建议是人工检查候选，不代表可安全删除。模型失败不影响快照查看。已通过模拟协议、合成数据及 Chrome 端到端验证，实际供应商验收尚待模型配置。架构见 [M5-DESIGN.md](doc/M5-DESIGN.md)，验证与待提供配置见 [M5-VALIDATION.md](doc/M5-VALIDATION.md)。

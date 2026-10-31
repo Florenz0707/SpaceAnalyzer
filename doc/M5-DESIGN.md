@@ -14,7 +14,7 @@ DeepSeekAdapter 使用 Chat Completions SSE，关闭思考模式，处理 finish
 
 OllamaAdapter 使用原生 NDJSON，先查询模型详情，要求 completion 能力并拒绝已声明云端模型；仅允许回环 HTTP，不跟随重定向、不使用环境代理。显式发送 num_ctx 与 num_predict，校验模型详情已声明的上下文上限。依据：[官方 Chat](https://docs.ollama.com/api/chat)。实际安装版本与模型仍需联调。
 
-所有配置在后端加载；空配置允许扫描继续运行，非法条目给出脱敏诊断。没有自动供应商回退或模型下载。云端密钥只放后端环境，目录接口不返回地址、请求头或密钥。
+所有配置在后端加载：环境变量覆盖 backend/config/models.toml，未设置项使用默认值；提供可提交模板及 Git 忽略的本地文件。API Key 只允许环境变量，不允许写入 TOML。空配置允许扫描继续运行，非法条目给出脱敏诊断。没有自动供应商回退或模型下载。云端密钥只放后端环境，目录接口不返回地址、请求头或密钥。
 
 ## 固定分析与证据
 

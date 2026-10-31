@@ -11,7 +11,7 @@ $env:SPACEANALYZER_TEST_SYMLINK = Join-Path $PWD '.cache/symlink-fixture/scan/li
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 ```
 
-后端 30 项 pytest、前端 12 项 Vitest、严格 Pyright、ESLint、格式检查、Python 编译与生产构建通过。每个实现阶段独立提交并运行完整检查，格式修改后重新运行。未跳过失败 hook，也未执行 push/pull。
+后端 31 项 pytest、前端 12 项 Vitest、严格 Pyright、ESLint、格式检查、Python 编译与生产构建通过。每个实现阶段独立提交并运行完整检查，格式修改后重新运行。未跳过失败 hook，也未执行 push/pull。
 
 ## 自动测试范围
 
@@ -42,3 +42,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 实际参数与启动方法见 COMPOSE.md。后续验证重点是非思考文本模式兼容性、流结束与取消、实际 token 用量、上下文预算、冷启动耗时和回答证据质量。只使用合成数据，不测试真实磁盘或外发真实文件名。
 
 尚未验证真实 API、真实本地模型、其他 Ollama 版本及硬件性能；工具自主循环和动态第三方 skill 不在首版交付范围。保留 feat/model-workflow，最终验收前不合并至 idle/dev。
+
+配置交付补充：增加本地 TOML 加载和模板，公开配置接口测试覆盖文件读取、环境变量优先级、非法 TOML 和内嵌密钥拒绝；仍未执行真实模型联调。
