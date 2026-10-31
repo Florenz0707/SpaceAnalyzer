@@ -12,6 +12,7 @@ import {
   type Snapshot,
 } from '../../lib/api';
 import Treemap from '../treemap/Treemap';
+import ChatPanel from '../chat/ChatPanel';
 
 interface Crumb {
   id: number;
@@ -25,6 +26,7 @@ interface View {
 
 export default function Workspace() {
   const [path, setPath] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
   const [history, setHistory] = useState<Page<Snapshot>>();
   const [view, setView] = useState<View>();
   const [job, setJob] = useState<Job>();
@@ -162,6 +164,23 @@ export default function Workspace() {
     if (view && node.kind === 'directory')
       void navigate([...view.trail, { id: node.id, name: node.name }]);
   };
+  async function locateEvidence(nodeId: number) {
+    if (!view) return;
+    const ticket = sequence.current;
+    try {
+      const node = await request<FileNode & { ancestors: Crumb[] }>(
+        `/snapshots/${view.snapshot.id}/nodes/${nodeId}`,
+      );
+      if (ticket !== sequence.current) return;
+      if (node.ancestors[0]?.id !== view.snapshot.root_node_id)
+        throw new Error('目录层级超过证据跳转上限。');
+      await navigate(node.ancestors);
+      if (sequence.current === ticket + 1 && node.kind === 'file')
+        setSelected(node);
+    } catch (cause) {
+      setError(String(cause));
+    }
+  }
   async function showErrors(offset = 0) {
     if (!view) return;
     try {
@@ -245,7 +264,7 @@ export default function Workspace() {
           {active && <span>总量未知，扫描结束后生成可浏览快照。</span>}
         </div>
       )}
-      <div className="workbench">
+      <div className={`workbench ${chatOpen && view ? 'with-chat' : ''}`}>
         <aside className="history">
           <div className="section-heading">
             <h2>快照</h2>
@@ -325,6 +344,9 @@ export default function Workspace() {
             <>
               <div className="summary">
                 <h2>逻辑大小 {bytes(view.snapshot.total_bytes)}</h2>
+                <button type="button" onClick={() => setChatOpen(true)}>
+                  分析此快照
+                </button>
                 <span>
                   {view.snapshot.file_count.toLocaleString()} 个文件 /{' '}
                   {view.snapshot.directory_count.toLocaleString()} 个目录
@@ -529,6 +551,14 @@ export default function Workspace() {
             </>
           )}
         </section>
+        {chatOpen && view && (
+          <ChatPanel
+            key={view.snapshot.id}
+            snapshot={view.snapshot}
+            onClose={() => setChatOpen(false)}
+            onLocate={(nodeId) => void locateEvidence(nodeId)}
+          />
+        )}
       </div>
     </main>
   );

@@ -64,5 +64,16 @@ class AnalysisQueries:
                 ).fetchone()
                 if row is None:
                     raise KeyError("Unknown node in this snapshot")
-                return dict(row)
+                ancestors = db.execute(
+                    "WITH RECURSIVE trail AS ("
+                    "SELECT id,parent_id,name,kind,0 AS depth FROM nodes "
+                    "WHERE snapshot_id=? AND id=? UNION ALL "
+                    "SELECT n.id,n.parent_id,n.name,n.kind,t.depth+1 FROM nodes n "
+                    "JOIN trail t ON n.id=t.parent_id "
+                    "WHERE n.snapshot_id=? AND t.depth<255) "
+                    "SELECT id,name FROM trail WHERE kind='directory' "
+                    "ORDER BY depth DESC",
+                    (snapshot_id, node_id, snapshot_id),
+                ).fetchall()
+                return {**dict(row), "ancestors": [dict(item) for item in ancestors]}
         raise ValueError("Unknown read-only query")
