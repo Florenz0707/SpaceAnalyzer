@@ -161,3 +161,7 @@ $env:SPACEANALYZER_DATABASE = 'D:\SpaceAnalyzer-agent-worktree\data\snapshots.sq
 后端读取 `SPACEANALYZER_DEEPSEEK_MODEL` 与 `DEEPSEEK_API_KEY`，以及 `SPACEANALYZER_OLLAMA_MODEL`、可选的 `SPACEANALYZER_OLLAMA_URL`（默认 `http://127.0.0.1:11434`）。密钥只保留在后端进程环境，不发给前端或写入数据库。默认不配置任何模型，不自动调用付费接口或下载模型。
 
 Ollama 仅允许回环 HTTP 地址与本地 completion 模型，拒绝已声明的云端模型；实际联网与模型能力仍需集成测试。无效配置只禁用对应条目，不影响扫描。调整环境变量后重启后端。实际配置由用户在真实联调阶段准备，禁止在聊天、文档或 Git 中填写密钥。
+
+模型预算使用 `SPACEANALYZER_OLLAMA_CONTEXT_WINDOW`（默认请求 8192）、`SPACEANALYZER_OLLAMA_MAX_OUTPUT_TOKENS`（默认 2048），DeepSeek 对应变量为 `SPACEANALYZER_DEEPSEEK_CONTEXT_WINDOW`（默认未知）和 `SPACEANALYZER_DEEPSEEK_MAX_OUTPUT_TOKENS`（默认 2048）。本轮 workflow 单次实际输出上限为 2048，并限制输入至 24000 UTF-8 字节预算，预留输出与协议开销；这是保守应用预算，不是精确 tokenizer 计数。小上下文模型可能因证据超预算被明确拒绝，不静默截断。
+
+Ollama 请求显式发送 num_ctx，默认 8192 是应用请求值，不代表已确认模型或硬件支持。根据实际模型和内存调整，本地最大允许 65536；模型详情声明更小上限时拒绝请求。真实联调前需确认模型名称、Ollama 地址和可用上下文窗口。

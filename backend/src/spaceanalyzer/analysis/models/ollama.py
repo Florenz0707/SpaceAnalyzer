@@ -20,6 +20,7 @@ class OllamaAdapter(HTTPAdapter):
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         url = urlsplit(base_url)
+        _ = url.port
         if (
             url.scheme != "http"
             or url.hostname not in {"127.0.0.1", "localhost", "::1"}
@@ -30,9 +31,10 @@ class OllamaAdapter(HTTPAdapter):
             or url.path not in {"", "/"}
         ):
             raise ValueError("Ollama requires an HTTP loopback endpoint")
-        if model_id.endswith((":cloud", "-cloud")):
+        if model_id.lower().endswith((":cloud", "-cloud")):
             raise ValueError("Cloud Ollama models are not local")
         super().__init__(model_id, base_url, transport=transport)
+        self._model_context: int | None = None
 
     async def check_connection(self) -> bool:
         try:
@@ -53,6 +55,13 @@ class OllamaAdapter(HTTPAdapter):
                     raise ModelError(
                         "unsupported", "Model has no declared completion capability"
                     )
+                info: dict[str, Any] = data.get("model_info", {})
+                windows = [
+                    value
+                    for key, value in info.items()
+                    if key.endswith(".context_length") and isinstance(value, int)
+                ]
+                self._model_context = min(windows) if windows else None
                 return True
         except httpx.HTTPError:
             raise ModelError("connection", "Ollama connection failed") from None
@@ -62,12 +71,17 @@ class OllamaAdapter(HTTPAdapter):
     async def generate(self, request: ModelRequest) -> AsyncIterator[ModelEvent]:
         validate_request(request)
         await self.check_connection()
+        context = request.context_window or 8192
+        if context > 65536 or (self._model_context and context > self._model_context):
+            raise ModelError(
+                "context_limit", "Requested local context exceeds model limits"
+            )
         payload: dict[str, object] = {
             "model": self.model_id,
             "messages": [m.model_dump() for m in request.messages],
             "stream": True,
             "think": False,
-            "options": {"num_predict": request.max_tokens},
+            "options": {"num_predict": request.max_tokens, "num_ctx": context},
         }
         async for line in self.lines("/api/chat", payload):
             if not line.strip():

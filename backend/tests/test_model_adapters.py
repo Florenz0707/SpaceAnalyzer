@@ -68,9 +68,12 @@ def test_ollama_local_stream_discovery_and_cloud_rejection() -> None:
     from spaceanalyzer.analysis.models.ollama import OllamaAdapter
     from spaceanalyzer.analysis.models.settings import load_registry
 
+    captured: list[dict[str, object]] = []
+
     def reply(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/api/show":
             return httpx.Response(200, json={"capabilities": ["completion"]})
+        captured.append(json.loads(request.content))
         return httpx.Response(
             200,
             stream=Chunks(
@@ -83,6 +86,7 @@ def test_ollama_local_stream_discovery_and_cloud_rejection() -> None:
         adapter = OllamaAdapter("fixture", transport=httpx.MockTransport(reply))
         events = [event async for event in adapter.generate(ModelRequest(messages=()))]
         assert events[0].text == "local"
+        assert captured[0]["options"] == {"num_predict": 2048, "num_ctx": 8192}
         assert events[-1].kind == "finished"
         cloud = OllamaAdapter(
             "fixture",
@@ -90,6 +94,25 @@ def test_ollama_local_stream_discovery_and_cloud_rejection() -> None:
                 lambda _: httpx.Response(200, json={"remote_model": "remote"})
             ),
         )
+        small = OllamaAdapter(
+            "fixture",
+            transport=httpx.MockTransport(
+                lambda _: httpx.Response(
+                    200,
+                    json={
+                        "capabilities": ["completion"],
+                        "model_info": {"fixture.context_length": 2048},
+                    },
+                )
+            ),
+        )
+        with pytest.raises(ModelError, match="context"):
+            _ = [
+                event
+                async for event in small.generate(
+                    ModelRequest(messages=(), context_window=4096)
+                )
+            ]
         with pytest.raises(ModelError, match="Cloud"):
             await cloud.check_connection()
 

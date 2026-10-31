@@ -33,3 +33,24 @@ def test_registry_validates_capability_and_hides_configuration() -> None:
     with pytest.raises(KeyError):
         registry.resolve("unknown")
     assert registry.list_models()[0].capacity.streaming
+
+
+def test_invalid_optional_model_configuration_does_not_disable_scanning() -> None:
+    from spaceanalyzer.analysis.models.settings import load_registry
+
+    registry = load_registry(
+        {
+            "SPACEANALYZER_DEEPSEEK_MODEL": "x" * 201,
+            "DEEPSEEK_API_KEY": "synthetic-secret",
+        }
+    )
+    assert not registry.list_models()
+    assert registry.diagnostics
+    assert "synthetic-secret" not in str(registry.diagnostics)
+    local = load_registry(
+        {
+            "SPACEANALYZER_OLLAMA_MODEL": "fixture",
+            "SPACEANALYZER_OLLAMA_CONTEXT_WINDOW": "4096",
+        }
+    )
+    assert local.resolve("ollama-local").spec.capacity.context_window == 4096

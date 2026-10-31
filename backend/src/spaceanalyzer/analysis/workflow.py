@@ -94,7 +94,11 @@ class AnalysisWorkflow:
                 Message(role="system", content="快照证据 JSON：" + context),
             ]
             current = Message(role="user", content=run.question)
-            budget = min(24000, (model.spec.capacity.context_window or 30000) - 4096)
+            output_budget = min(2048, model.spec.capacity.max_output_tokens or 2048)
+            budget = min(
+                24000,
+                (model.spec.capacity.context_window or 30000) - output_budget - 512,
+            )
             used = sum(len(m.content.encode()) for m in [*messages, current])
             if used > budget:
                 raise ModelError(
@@ -115,7 +119,8 @@ class AnalysisWorkflow:
                 history = pair + history
             request = ModelRequest(
                 messages=tuple([*messages, *history, current]),
-                max_tokens=min(2048, model.spec.capacity.max_output_tokens or 2048),
+                max_tokens=output_budget,
+                context_window=model.spec.capacity.context_window,
             )
             ended = False
             async with asyncio.timeout(180):

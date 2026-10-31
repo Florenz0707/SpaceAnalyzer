@@ -41,6 +41,7 @@ class ToolDefinition(Record):
 class ModelRequest(Record):
     messages: tuple[Message, ...]
     max_tokens: int = Field(default=2048, ge=1, le=8192)
+    context_window: int | None = Field(default=None, gt=0)
     tools: tuple[ToolDefinition, ...] = ()
     # Reserved contracts; first release runs fixed queries and never executes calls.
     reasoning: bool = False
