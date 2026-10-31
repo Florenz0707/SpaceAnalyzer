@@ -9,7 +9,7 @@
 | DeepSeek deepseek-flash   | 本次合成验收通过；常规启动前仍需修正旧凭据覆盖           | [DeepSeek 验收记录](M5-DEEPSEEK-ACCEPTANCE.md) |
 | WSL Ollama deepseek-r1:7b | 连通与生成通过，首轮事实判断错误且缺少引用，内容验收阻塞 | [Ollama 验收记录](M5-OLLAMA-ACCEPTANCE.md)     |
 
-M5 整体验收尚未完成。DeepSeek 结果不覆盖 Ollama 的阻塞，也不保证模型对任意真实数据的回答正确。
+2026-10-31 发布决定：用户已授权合并到 idle 并准备 v0.1.0，Ollama 内容问题作为已知质量限制保留。DeepSeek 结果不覆盖该失败，也不保证模型对任意数据的回答正确；本次发布范围见 [v0.1.0](releases/v0.1.0.md)。
 
 ## 工程检查
 
