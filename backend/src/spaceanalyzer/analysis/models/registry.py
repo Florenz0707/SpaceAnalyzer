@@ -18,6 +18,7 @@ class ResolvedModel:
 class ModelRegistry:
     def __init__(self) -> None:
         self._models: dict[str, ResolvedModel] = {}
+        self.diagnostics: list[str] = []
 
     def register(self, spec: ModelSpec, adapter: ModelAdapter) -> None:
         if spec.key in self._models:

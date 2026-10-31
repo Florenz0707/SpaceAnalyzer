@@ -157,3 +157,5 @@ M5 采用 ModelAdapter、ModelRegistry、ModelCapacity，将 DeepSeek 与 Ollama
 M5.1 已实现统一契约与能力校验，测试覆盖注册冲突、未知模型、能力拒绝和脱敏目录；尚无真实供应商调用。
 
 M5.2：DeepSeek Chat Completions SSE 适配器已完成，模拟分片验证 Unicode、终态、鉴权脱敏和截断流。运行时沿用已锁定的 httpx2，将其由开发依赖调整为应用依赖。实际模型配置与付费请求尚未测试。
+
+M5.3：Ollama 原生流与模型详情检查完成；仅允许回环 HTTP，拒绝云端模型。环境配置为空时禁用模型但不影响扫描；错误配置给出脱敏诊断。两家适配器均经分片模拟测试，尚未连接用户模型。
