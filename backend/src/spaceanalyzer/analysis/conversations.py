@@ -8,6 +8,10 @@ from spaceanalyzer.analysis.models.contracts import Record
 RunStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
 
+class AnalysisBusyError(RuntimeError):
+    """An analysis is already active."""
+
+
 class Conversation(Record):
     id: str
     snapshot_id: str

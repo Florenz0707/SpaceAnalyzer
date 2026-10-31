@@ -12,6 +12,12 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel
 from starlette.middleware.base import RequestResponseEndpoint
 
+from spaceanalyzer.analysis.conversations import AnalysisBusyError
+from spaceanalyzer.analysis.models.contracts import ModelError
+from spaceanalyzer.analysis.models.registry import ModelRegistry
+from spaceanalyzer.analysis.models.settings import load_registry
+from spaceanalyzer.analysis.workflow import AnalysisWorkflow
+from spaceanalyzer.api.chat import router as chat_router
 from spaceanalyzer.api.snapshots import router
 from spaceanalyzer.services.snapshots import ScanBusyError, SnapshotService
 
@@ -25,7 +31,11 @@ class HealthResponse(BaseModel):
     read_only: bool = True
 
 
-def create_app(database: Path | None = None, static_dir: Path | None = None) -> FastAPI:
+def create_app(
+    database: Path | None = None,
+    static_dir: Path | None = None,
+    model_registry: ModelRegistry | None = None,
+) -> FastAPI:
     database = database or Path(
         os.environ.get(
             "SPACEANALYZER_DATABASE", str(PROJECT_ROOT / "data/snapshots.sqlite3")
@@ -37,13 +47,19 @@ def create_app(database: Path | None = None, static_dir: Path | None = None) -> 
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         service = SnapshotService(database)
         application.state.snapshot_service = service
+        analysis = AnalysisWorkflow(
+            service, model_registry if model_registry is not None else load_registry()
+        )
+        application.state.analysis_workflow = analysis
         try:
             yield
         finally:
+            await analysis.close()
             await asyncio.to_thread(service.close)
 
     application = FastAPI(title="SpaceAnalyzer", version="0.1.0", lifespan=lifespan)
     application.include_router(router)
+    application.include_router(chat_router)
 
     @application.middleware("http")
     async def local_requests(
@@ -84,9 +100,14 @@ def create_app(database: Path | None = None, static_dir: Path | None = None) -> 
     async def invalid_input(request: Request, error: Exception) -> JSONResponse:
         return JSONResponse({"detail": str(error)}, status_code=400)
 
+    @application.exception_handler(AnalysisBusyError)
     @application.exception_handler(ScanBusyError)
     async def busy(request: Request, error: Exception) -> JSONResponse:
         return JSONResponse({"detail": str(error)}, status_code=409)
+
+    @application.exception_handler(ModelError)
+    async def model_failure(request: Request, error: ModelError) -> JSONResponse:
+        return JSONResponse({"detail": str(error), "code": error.code}, status_code=502)
 
     @application.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:

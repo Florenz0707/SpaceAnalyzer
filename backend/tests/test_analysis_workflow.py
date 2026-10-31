@@ -92,3 +92,63 @@ def test_workflow_persistence_idempotency_cancel_and_cloud_consent(
             await reopened.close()
 
         asyncio.run(run())
+
+
+@pytest.mark.parametrize("failure", ["citation", "empty", "context", "interrupted"])
+def test_analysis_failures_preserve_snapshot_and_recovery(
+    tmp_path: Path, failure: str
+) -> None:
+    from spaceanalyzer.analysis.models.contracts import ModelCapacity
+
+    class FaultyAdapter(ScriptedAdapter):
+        async def generate(self, request: ModelRequest) -> AsyncIterator[ModelEvent]:
+            if failure == "citation":
+                yield ModelEvent(kind="text", text="Unsupported [E999]")
+            yield ModelEvent(kind="finished", reason="stop")
+
+    with SnapshotService(tmp_path / "state.sqlite3") as snapshots:
+        root = tmp_path / "scan"
+        root.mkdir()
+        snapshot_id = wait_for_scan(snapshots, snapshots.start_scan(str(root)).id)
+
+        async def run() -> None:
+            registry = ModelRegistry()
+            registry.register(
+                ModelSpec(
+                    key="fixture",
+                    provider="ollama",
+                    model_id="fixture",
+                    capacity=ModelCapacity(
+                        context_window=100 if failure == "context" else None
+                    ),
+                ),
+                FaultyAdapter(),
+            )
+            workflow = AnalysisWorkflow(snapshots, registry)
+            conversation = workflow.create_conversation(snapshot_id, "fixture", False)
+            if failure == "interrupted":
+                # Public persistence interface prepares a previously queued run.
+                pending, _ = workflow.store.create_run(
+                    conversation.id, "question", "interrupted"
+                )
+                reopened = AnalysisWorkflow(snapshots, registry)
+                recovered = reopened.get_run(pending.id)
+                assert recovered.status == "failed"
+                assert recovered.error_code == "interrupted"
+                assert reopened.events(pending.id, 0)[-1].kind == "terminal"
+                await reopened.close()
+            else:
+                record = await workflow.start_run(conversation.id, "question", "failed")
+                await finished(workflow, record.id)
+                result = workflow.get_run(record.id)
+                assert result.status == "failed"
+                expected = {
+                    "citation": "invalid_evidence",
+                    "empty": "incomplete",
+                    "context": "context_limit",
+                }
+                assert result.error_code == expected[failure]
+            assert snapshots.get_snapshot(snapshot_id).status == "completed"
+            await workflow.close()
+
+        asyncio.run(run())

@@ -4,7 +4,12 @@ import json
 import sqlite3
 from uuid import uuid4
 
-from spaceanalyzer.analysis.conversations import AnalysisRun, Conversation, RunEvent
+from spaceanalyzer.analysis.conversations import (
+    AnalysisBusyError,
+    AnalysisRun,
+    Conversation,
+    RunEvent,
+)
 from spaceanalyzer.storage.snapshots import SnapshotStore, now
 
 CHAT_SCHEMA = """
@@ -163,7 +168,7 @@ class ConversationStore:
             if db.execute(
                 "SELECT 1 FROM analysis_runs WHERE status IN ('queued','running')"
             ).fetchone():
-                raise RuntimeError("Another analysis run is active")
+                raise AnalysisBusyError("Another analysis run is active")
             run = AnalysisRun(
                 id=uuid4().hex,
                 conversation_id=conversation_id,
