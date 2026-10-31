@@ -18,7 +18,7 @@
 - `dev` 保存本地运行的开发版本，主工作目录通常检出 `dev`。需要更新运行版本时，将已验收的 `idle` 版本合并到 `dev`。
 - agent-worktree 空闲时保持 `idle`。开始修改前，从 `idle` 创建并切换到独立功能分支，例如 `feat/snapshot-scanner`、`fix/scan-cancellation` 或 `chore/tooling`；不直接在 `idle` 上开发。
 - 完成修改、检查与验收后，将功能分支合并到 `idle`，并让 agent-worktree 切回 `idle`。验收未通过时保留功能分支及现场，不提前合并。
-- 工作前检查工作树、当前分支和未提交改动。各工作树分别维护依赖与缓存；本地忽略的 skills 需要按 `doc/SKILLS.md` 的固定来源同步，不依赖它们自动出现在新工作树中。
+- 工作前检查工作树、当前分支和未提交改动。各工作树分别维护依赖与缓存；本地忽略的 skills 需要按 `doc/skills-lock.json` 的固定来源同步，不依赖它们自动出现在新工作树中。
 - 本次仓库初始化按用户要求在主目录完成首次提交后，再建立上述工作树与分支；后续开发执行独立工作树流程。
 
 ## 任务完成与提交粒度
@@ -82,17 +82,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 - 安装、运行、构建、配置、数据位置或部署方式变化：更新 `COMPOSE.md`。
 - 里程碑完成、执行顺序或验收条件改变：更新 `doc/PLAN.md`，完成状态必须有验证依据。
 - 发布准备同步版本、CHANGE、COMPOSE 和 `doc/releases/<version>.md`；记录实际验证与已知限制，历史失败不得写成已修复，材料不包含本地配置或用户数据。
-- skills 仅在用户确认后安装到 `.agents/skills/`；记录来源、固定版本、用途和平台要求到 `doc/SKILLS.md`。未经请求不做全局安装。
+- skills 仅在用户确认后安装到 `.agents/skills/`；记录来源、固定版本和文件哈希到 `doc/skills-lock.json`，用途与平台适配约定写入本节。未经请求不做全局安装。
 - 不将计划写成已实现功能，不提交用户真实磁盘路径、快照或密钥。
 
 ## 项目级 skills
 
-- 已安装技能位于 `.agents/skills/`。选择和使用前查阅 `doc/SKILLS.md` 的安装状态与适配约定，固定来源和文件哈希见 `doc/skills-lock.json`。
+- 已安装技能位于 `.agents/skills/`。使用前按 `doc/skills-lock.json` 核对固定来源与文件哈希，并确认技能目录实际存在；适配约定见本节。
 - 按任务需要读取对应 `SKILL.md`，通过其中的相对链接按需读取参考文件，不为安装而执行技能工作流。
 - 领域文档采用根目录 `GLOSSARY.md` 和 `doc/adr/`，在实际产生术语或决策时创建。上游示例中的 `docs/adr/` 在本项目映射为 `doc/adr/`。
-- Playwright 在 Windows 优先使用 `doc/SKILLS.md` 中已验证的原生 pnpm CLI 命令；需要 Bash 包装器时使用项目内 `.agents/skills/playwright/scripts/playwright_cli.sh`，不使用全局 skills 路径。
+- Playwright 在 Windows 优先使用原生命令前缀 `pnpm --dir frontend dlx @playwright/cli@0.1.22`；浏览器操作先获取快照再操作元素，截图与调试产物放入忽略目录 `output/playwright/`。需要 Bash 包装器时使用项目内 `.agents/skills/playwright/scripts/playwright_cli.sh`，不使用全局 skills 路径。CLI 临时缓存不属于应用依赖，技能安装不等于已配置端到端测试套件。
 - 技能中的原型、审查、文档和测试方法遵守本文的验证、只读与清理约定；安装不自动授权提交、推送、发布 issue 或执行额外编排。
-- 保持上游技能文件原样，项目适配统一写入本节和 `doc/SKILLS.md`；升级时更新锁定来源并重新核验。
+- 保持上游技能文件原样，项目适配统一写入本节；升级时更新锁定来源并重新核验。
 
 ## 文件清理与变更范围
 

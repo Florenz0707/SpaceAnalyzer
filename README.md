@@ -54,13 +54,13 @@ uv run --project backend --frozen uvicorn spaceanalyzer.main:app --host 127.0.0.
 
 打开快照并选择“分析此快照”，可选择模型、查看近期会话、流式提问、取消生成和展开证据；节点证据可定位到对应目录。云端会话需要明确同意，快照证据移除原始文件名与路径，但用户主动输入的文字和近期对话仍会发送。
 
-架构与扩展边界见 [M5-DESIGN.md](doc/M5-DESIGN.md)，验证状态见 [M5-VALIDATION.md](doc/M5-VALIDATION.md)。回答中的证据引用不能证明所有自然语言结论正确，人工检查建议不等于可安全删除。
+架构与交付状态见 [执行计划](doc/PLAN.md)，供应商适配和固定证据 workflow 实现位于 [analysis/](backend/src/spaceanalyzer/analysis/)。回答中的证据引用不能证明所有自然语言结论正确，人工检查建议不等于可安全删除。
 
 ## Windows 回收站
 
 保留卷根 $RECYCLE.BIN 中可读内容的大小。链接跳过和权限拒绝在扫描结束或取消时分别汇总，正文保留发生次数；其他错误逐条保存。普通目录中的同名文件夹不合并。
 
-error_count 表示保存的记录数，分组中的实际条目数见正文。新快照采用扫描策略版本 2，旧快照不改写；详情见 [回收站处理](doc/RECYCLE-BIN-FIX.md)。
+error_count 表示保存的记录数，分组中的实际条目数见正文。新快照采用扫描策略版本 2，旧快照不改写。
 
 ## 开发与检查
 
@@ -73,7 +73,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 
 Bash 使用 bash scripts/check.sh。完整检查覆盖已跟踪及未忽略的新文件，包含格式、lint、严格类型检查、Python 编译、后端 pytest、前端 Vitest 与生产构建。格式自动修改文件后重新运行至全部通过。
 
-VS Code 使用项目解释器及 TypeScript SDK，编辑器设置与 CLI 一致；CLI 为最终依据。已安装的项目开发技能在本地 .agents/skills/，不包含于源码发行包，运行应用无需安装。来源和固定哈希见 [SKILLS.md](doc/SKILLS.md)。
+VS Code 使用项目解释器及 TypeScript SDK，编辑器设置与 CLI 一致；CLI 为最终依据。已安装的项目开发技能在本地 .agents/skills/，不包含于源码发行包，运行应用无需安装。来源和固定哈希见 [skills-lock.json](doc/skills-lock.json)，使用与平台适配约定见 [AGENTS.md](AGENTS.md)。
 
 ## 已知限制
 
@@ -82,4 +82,4 @@ VS Code 使用项目解释器及 TypeScript SDK，编辑器设置与 CLI 一致�
 - 同一数据库只运行一个后端进程；会话显示最近 50 个、每会话最近 20 次运行，模型历史受预算限制。
 - 首版不提供 UNC 扫描、实时监控、快照对比、重复文件内容分析、自动清理或桌面安装器。
 
-性能证据限于已测环境和合成数据，见 [M4-VALIDATION.md](doc/M4-VALIDATION.md)。本地用户配置、数据库、截图、依赖和缓存均不包含于源码发行包。
+性能证据限于已测环境和合成数据，测量结果见 [benchmarks/](doc/benchmarks/)，范围说明见 [执行计划](doc/PLAN.md)。本地用户配置、数据库、截图、依赖和缓存均不包含于源码发行包。
