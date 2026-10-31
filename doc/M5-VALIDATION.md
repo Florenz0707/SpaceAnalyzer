@@ -2,7 +2,7 @@
 
 ## 当前结论
 
-2026-10-31：M5.1–M5.6 工程实现与模拟验证完成。按用户要求，在需要具体模型配置时暂停；M5.7 真实供应商联调未执行。
+2026-10-31：M5.1–M5.6 工程实现与模拟验证完成。Ollama 已配置并开始真实验收，首轮完整分析出现最大目录判断错误及缺少引用，按用户要求暂停；DeepSeek 尚未联调。详见 [真实 Ollama 验收记录](M5-OLLAMA-ACCEPTANCE.md)。
 
 完整检查命令：
 
@@ -44,3 +44,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 尚未验证真实 API、真实本地模型、其他 Ollama 版本及硬件性能；工具自主循环和动态第三方 skill 不在首版交付范围。保留 feat/model-workflow，最终验收前不合并至 idle/dev。
 
 配置交付补充：增加本地 TOML 加载和模板，公开配置接口测试覆盖文件读取、环境变量优先级、非法 TOML 和内嵌密钥拒绝；仍未执行真实模型联调。
+
+当前验收状态：Ollama 连接与生成链路通过，语义内容验收阻塞。旧记录中等待配置或尚未真实联调描述的是本轮之前的状态，当前结论以文首及 M5-OLLAMA-ACCEPTANCE.md 为准。

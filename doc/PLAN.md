@@ -99,7 +99,7 @@
 
 ## M5：模型 Workflow 与对话
 
-2026-10-31 当前状态：M5.1–M5.6 实现、自动测试和合成浏览器验证完成；M5.7 的真实 DeepSeek/Ollama 联调待用户提供配置，按授权在此暂停。架构见 [M5-DESIGN.md](M5-DESIGN.md)，完整验证与未验证项见 [M5-VALIDATION.md](M5-VALIDATION.md)。
+2026-10-31 当前状态：M5.1–M5.6 实现、自动测试和合成浏览器验证完成；M5.7 已开展真实 Ollama 验收，但最大目录判断错误且未引用证据，按用户要求暂停；DeepSeek 仍待配置。架构见 [M5-DESIGN.md](M5-DESIGN.md)，完整验证与未验证项见 [M5-VALIDATION.md](M5-VALIDATION.md)。
 
 在快照闭环稳定后推进：
 
@@ -192,3 +192,5 @@ M5.7 联调准备：修复非法可选模型配置影响启动的缺陷；本地
 目前完整检查覆盖后端 30 项、前端 12 项与生产构建。合成模型浏览器验证另行通过。继续所需信息为 DeepSeek 模型 ID、API Key 已在本机配置的状态，以及 Ollama 模型名称、地址和上下文预算；不在聊天中收集密钥，不读取用户真实磁盘进行测试。
 
 M5 配置交付修复：在依赖 M5 的 fix/model-config-file 分支补充 backend/config/models.example.toml 与忽略提交的 models.toml。配置读取、优先级和错误边界测试通过，完整检查覆盖后端 31 项和前端 12 项。真实模型联调仍暂停等待用户填写配置。
+
+M5.7 真实 Ollama 验收：连通、扫描事实、幂等和并发响应通过；内容验收发现错误最大目录和缺少引用，暂停后续步骤，不标记 M5 完成。证据和未执行项目见 [M5-OLLAMA-ACCEPTANCE.md](M5-OLLAMA-ACCEPTANCE.md)。本轮仅记录失败，不直接修复或合并；此前任务分支保留。
