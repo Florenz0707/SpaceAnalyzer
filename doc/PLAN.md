@@ -31,7 +31,7 @@
 - [x] 单任务互斥、取消收尾、中断恢复、自身数据库及辅助文件排除。
 - [x] Windows 长路径和用户准备的真实合成符号链接验证。
 
-契约及验收接口见 [M1-SPEC.md](M1-SPEC.md)。后续回收站汇总策略保留可读占用、实际发生次数和未知空间，不静默忽略错误，见 [RECYCLE-BIN-FIX.md](RECYCLE-BIN-FIX.md)。
+扫描 API 契约以 [api/](../backend/src/spaceanalyzer/api/) 的请求响应模型及对应测试为准。回收站汇总策略保留可读占用、实际发生次数和未知空间，不静默忽略错误，使用说明见 [README](../README.md#windows-回收站)。
 
 ## M2：本机 API（已完成）
 
@@ -54,7 +54,7 @@
 - [x] Windows 真实链接和 ACL 场景，浏览器有界加载、布局与绘制测量。
 - [x] 区分文件系统、数据库、布局算法和浏览器绘制证据，记录环境及限制。
 
-证据见 [M4-VALIDATION.md](M4-VALIDATION.md) 与 benchmarks/。百万节点实际扫描、其他硬件和全盘用户数据未测试，不作性能承诺。
+测量结果见 [benchmarks/](benchmarks/)，阶段验收过程保留在 Git 历史的 M4 提交 c63bcb6 中。百万节点实际扫描、其他硬件和全盘用户数据未测试，不作性能承诺。
 
 ## M5：模型与对话（v0.1.0 交付已接受）
 
@@ -67,7 +67,7 @@
 - [x] M5.7：DeepSeek 本次真实合成验收，覆盖内容/引用、多轮、取消、脱敏、浏览器与重启。
 - [x] Ollama 适配与连通验证，首轮内容失败证据已记录并纳入已知限制。
 
-架构见 [M5-DESIGN.md](M5-DESIGN.md)，验证总览见 [M5-VALIDATION.md](M5-VALIDATION.md)。模型解释不是事实保证；引用存在不代表所有判断正确，未知占用不能按零计算，建议需人工核对。
+模型适配和 workflow 实现见 [analysis/](../backend/src/spaceanalyzer/analysis/)，测量结果见 [benchmarks/](benchmarks/)，真实模型验收过程保留在 Git 历史的 623181a、58cb61a 提交中。模型解释不是事实保证；引用存在不代表所有判断正确，未知占用不能按零计算，建议需人工核对。
 
 ## 后续待办
 
