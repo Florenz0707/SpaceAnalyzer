@@ -4,7 +4,7 @@
 
 支持 Windows 本机开发双进程和构建后的单进程运行：开发时通过 Vite 代理访问 API，构建后由 FastAPI 同源托管前端。当前无需 Docker Compose；容器只能看到挂载路径，不作为本机磁盘扫描的默认运行方式。
 
-本文件名按约定保留为 `COMPOSE.md`。本轮功能位于 `D:/SpaceAnalyzer-agent-worktree` 的 `feat/model-workflow`，包含 M1–M4 及 M5 对话实现；M5 真实模型联调待用户配置，已按任务分别本地提交，尚未合并至主目录 dev；体验本轮功能时应先进入该工作树。
+本文件名按约定保留为 `COMPOSE.md`。本轮功能位于 `D:/SpaceAnalyzer-agent-worktree` 的 `test/deepseek-acceptance`，包含 M1–M4 及 M5 对话实现；M5 真实模型联调待用户配置，已按任务分别本地提交，尚未合并至主目录 dev；体验本轮功能时应先进入该工作树。
 
 ## 环境要求
 
@@ -156,7 +156,7 @@ $env:SPACEANALYZER_DATABASE = 'D:\SpaceAnalyzer-agent-worktree\data\snapshots.sq
 
 错误列表展示保存的记录数量：例如 100 次链接跳过与 4 次权限拒绝显示为两条汇总，正文保留 100 和 4。扫描期间汇总尚未写入；其他类型错误仍按原方式展示。普通目录中的同名文件夹不应用该规则。
 
-## M5 模型配置（尚待真实联调）
+## M5 模型配置与验收
 
 后端默认读取当前代码工作树中的 `backend/config/models.toml`。仓库提供 `backend/config/models.example.toml` 模板，本轮已在 agent-worktree 创建禁用状态的本地配置。其他工作树首次使用时复制模板：
 
@@ -191,3 +191,5 @@ uv run --project backend --frozen uvicorn spaceanalyzer.main:app --host 127.0.0.
 可以只配置其中一家供应商；未安装 Ollama 模型时请自行准备，应用不自动拉取。配置错误在 `/api/models` 中返回脱敏诊断。显式 POST `/api/models/{key}/check` 可以检查连接，真正生成仍需合成快照上的联调。
 
 对话事件 GET `/api/runs/{id}/events?after=<序号>` 返回 SSE，也接受 Last-Event-ID。断线重连只重放已保存事件；显式取消调用 POST `/api/runs/{id}/cancel`。上游是否立即停止计算或计费不能由本地取消保证。首版不自动重试生成；失败后用户再次提交使用新的请求键。
+
+本次 DeepSeek 联调发现 Windows 进程/用户级 DEEPSEEK_API_KEY 为旧凭据（401），系统级另有有效凭据。用户环境变量可能覆盖系统变量，已经运行的进程还可能保留旧值。常规后端需要在启动终端中明确设置正确凭据并重启；不要打印值。应用不自动选择其他环境作用域，也不修改用户/系统变量。隔离验收临时使用有效系统级凭据，不能据此认为普通启动已自动修复。
