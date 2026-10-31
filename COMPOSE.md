@@ -119,7 +119,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 
 v0.1.0 准备以 git archive 导出源码 ZIP，并提供 SHA256SUMS.txt 和 RELEASE-MANIFEST.json。材料保存在忽略目录 output/releases/v0.1.0/。归档只含受 Git 跟踪的项目文件，不含本地配置、数据库、密钥、依赖、缓存或 skills；需按上述步骤安装依赖并构建，未提供桌面安装器。
 
-实际文件摘要与提交号以归档旁的 manifest 为准。发布说明见 doc/releases/v0.1.0.md，正式标签和远端发布在后续发布步骤处理。
+实际文件摘要与提交号以归档旁的 manifest 为准。发布说明见 doc/releases/v0.1.0.md，正式标签由用户上传，包含 workflow 的版本 tag 会自动触发源码打包与 GitHub Release。
 
 在已有 Git 工作副本中可用以下命令生成源码候选与校验值，目标目录只用于本次发布生成文件：
 
@@ -128,3 +128,9 @@ New-Item -ItemType Directory -Force output/releases/v0.1.0
 git archive --format=zip --prefix=SpaceAnalyzer-v0.1.0/ --output=output/releases/v0.1.0/SpaceAnalyzer-v0.1.0-source.zip idle
 Get-FileHash output/releases/v0.1.0/SpaceAnalyzer-v0.1.0-source.zip -Algorithm SHA256
 ```
+
+## GitHub 自动发布
+
+.github/workflows/release.yml 在版本 tag push 时运行，自动创建源码 ZIP、SHA256SUMS.txt、RELEASE-MANIFEST.json 并发布 Release。使用 GITHUB_TOKEN 的 contents: write 权限，无需另配发布密钥。版本必须与 tag 去掉 v 一致，并准备 `doc/releases/<tag>.md` 的公开说明区段。
+
+tag 必须包含 workflow 所在提交，已有同名 Release 不覆盖；普通分支 push 不发布。源码包不包含运行时或前端 dist。详细步骤、预发布及失败恢复边界见 [RELEASE-WORKFLOW.md](doc/RELEASE-WORKFLOW.md)。GitHub 端校验与上传尚待首次真实 tag 运行，本地完整检查仍需执行。

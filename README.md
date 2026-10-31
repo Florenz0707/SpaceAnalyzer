@@ -4,7 +4,7 @@ Windows 优先、单机运行的只读磁盘快照分析 Web 应用。使用类�
 
 ## v0.1.0 发布准备
 
-本版本已按用户授权合并到本地 idle，正在准备 v0.1.0 源码发行材料。发布说明见 [v0.1.0](doc/releases/v0.1.0.md)，功能与后续工作见 [PLAN.md](doc/PLAN.md)。正式远端发布由用户执行。
+本版本已按用户授权合并到本地 idle，正在准备 v0.1.0 源码发行材料。发布说明见 [v0.1.0](doc/releases/v0.1.0.md)，功能与后续工作见 [PLAN.md](doc/PLAN.md)。用户上传版本 tag 后由 GitHub Actions 自动打包并创建 Release，见 [自动发布](doc/RELEASE-WORKFLOW.md)。
 
 当前提供元数据扫描、SQLite 快照、后台任务与取消、历史重载、目录分页、Canvas 矩形树图及模型分析对话。构建后的前端可由 FastAPI 同源托管。DeepSeek deepseek-flash 已通过本次合成数据真实验收；本地 Ollama 适配与连通通过，但 deepseek-r1:7b 的事实判断和引用问题作为已知限制保留，不保证任意本地模型的回答质量。
 
@@ -27,6 +27,7 @@ backend/             应用源码、测试、Python 依赖与 uv.lock
 backend/config/      模型配置模板；本地 models.toml 不提交
 frontend/            React 界面、测试、前端依赖与 pnpm-lock.yaml
 scripts/             PowerShell/Bash 质量检查入口
+.github/workflows/   版本 tag 自动源码打包与 Release 发布
 doc/                 执行计划、架构、验收证据与发布说明
 .vscode/             共享编辑器设置与检查任务
 AGENTS.md            项目协作约定
