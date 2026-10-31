@@ -3,7 +3,7 @@
 ## 目标与只读边界
 
 - 本项目是 Windows 优先、单机运行、前后端分离的磁盘快照分析工具。
-- 当前优先实现一次快照可视化。模型分析、实时监控和快照对比按 `doc/PLAN.md` 分阶段推进。
+- v0.1.0 基线包含一次快照可视化与固定证据模型对话。后续工作按 `doc/PLAN.md` 推进，当前发布范围与已知限制见 `doc/releases/v0.1.0.md`。
 - 对被分析的文件系统仅允许读取元数据，不得删除、移动、重命名、改写文件、修改权限或创建标记文件。
 - 应用自身数据库可以写入；开发依赖、构建与测试产物只能写入项目工具目录或测试临时目录。
 - 不跟随符号链接、目录联接和其他可能越出扫描范围的重解析目标；不自动提权。
@@ -59,9 +59,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 ## 模块划分
 
 - `backend/src/spaceanalyzer/main.py`：应用装配，保持精简。
-- 后续 `api/`：路由与请求响应模型；`scanner/`：文件系统遍历与聚合；`storage/`：SQLite 连接、迁移和仓储；`services/`：任务和快照业务；`analysis/`：未来模型 workflow。
+- `api/`：路由与请求响应模型；`scanner/`：文件系统遍历与聚合；`storage/`：SQLite 连接、迁移和仓储；`services/`：扫描任务和快照业务；`analysis/`：模型适配、证据、对话和 workflow。
 - 路由不得直接实现递归扫描或 SQL 聚合；扫描器不依赖 FastAPI、前端或模型 SDK。
-- 后续前端按 `features/snapshots/`、`features/treemap/`、`features/chat/` 组织业务，`components/` 仅放真正共享的 UI，`lib/` 放 API 客户端等通用设施。
+- 前端按 `features/snapshots/`、`features/treemap/`、`features/chat/` 组织业务，`components/` 仅放真正共享的 UI，`lib/` 放 API 客户端等通用设施。
 - 仅在开始实现对应功能时创建模块，不提前建立空文件夹、泛化基类或占位服务。
 - 前端不得全量加载整盘文件树；后端提供有界的目录查询，视图按需加载。
 
@@ -81,6 +81,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1
 - 每批用户可见功能、修复、工程规范或重要架构变化：更新 `CHANGE.md` 的“未发布”，按日期记录已完成事实。
 - 安装、运行、构建、配置、数据位置或部署方式变化：更新 `COMPOSE.md`。
 - 里程碑完成、执行顺序或验收条件改变：更新 `doc/PLAN.md`，完成状态必须有验证依据。
+- 发布准备同步版本、CHANGE、COMPOSE 和 `doc/releases/<version>.md`；记录实际验证与已知限制，历史失败不得写成已修复，材料不包含本地配置或用户数据。
 - skills 仅在用户确认后安装到 `.agents/skills/`；记录来源、固定版本、用途和平台要求到 `doc/SKILLS.md`。未经请求不做全局安装。
 - 不将计划写成已实现功能，不提交用户真实磁盘路径、快照或密钥。
 
