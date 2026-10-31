@@ -135,6 +135,7 @@ it('requires cloud consent and displays streamed answer and evidence navigation'
     await screen.findByRole('button', { name: /定位 fixture.bin/ }),
   );
   expect(locate).toHaveBeenCalledWith(2);
+  expect(screen.queryByText(/"size_bytes"/)).toBeNull();
   expect(calls[0]).toHaveProperty('allow_cloud', true);
   expect(Stream.all[0].close).toHaveBeenCalled();
 });

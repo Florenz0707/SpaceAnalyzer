@@ -490,12 +490,6 @@ tr.selected {
   font-size: 12px;
   text-align: left;
 }
-.evidence-card pre {
-  max-height: 220px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .chat-actions {
   margin-top: 10px;
 }

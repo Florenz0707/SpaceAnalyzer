@@ -54,7 +54,39 @@ function EvidenceCard({
             </button>
           ),
       )}
-      <pre>{JSON.stringify(evidence.data, null, 2)}</pre>
+      {evidence.query === 'overview' && (
+        <p>
+          已读逻辑大小 {bytes(Number(evidence.data.total_bytes) || 0)}，
+          {Number(evidence.data.file_count) || 0} 个文件，
+          {Number(evidence.data.directory_count) || 0} 个目录。
+          {evidence.data.status !== 'completed'
+            ? '快照不完整，未知占用未计入。'
+            : '扫描已完成。'}
+        </p>
+      )}
+      {Array.isArray(evidence.data.groups) && (
+        <ul>
+          {(evidence.data.groups as Record<string, unknown>[]).map(
+            (group, index) => (
+              <li key={index}>
+                {group.extension !== undefined
+                  ? `${String(group.extension)}：${bytes(Number(group.total_bytes) || 0)}，${Number(group.file_count) || 0} 个文件`
+                  : `${String(group.code)}：${Number(group.records) || 0} 条记录`}
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+      {evidence.query === 'errors' && (
+        <p>
+          共 {Number(evidence.data.record_count) || 0}{' '}
+          条遗漏记录；回收站汇总的一条记录可能包含多个条目，未知占用不按零计算。
+        </p>
+      )}
+      {items.length === 0 &&
+        ['children', 'largest_files'].includes(evidence.query) && (
+          <p>没有已记录的可读条目。</p>
+        )}
     </details>
   );
 }
