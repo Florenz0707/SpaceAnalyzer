@@ -1,0 +1,139 @@
+name: Release source archive
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate version and package tracked source
+        id: package
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          import { createHash } from 'node:crypto';
+          import path from 'node:path';
+
+          const tag = process.env.RELEASE_TAG;
+          const match = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(tag || '');
+          if (!match || match[4]?.split('.').some(part => /^0\d+$/.test(part))) {
+            throw new Error('Expected a version tag such as v0.1.0 or v0.2.0-rc.1');
+          }
+          const version = tag.slice(1);
+          const frontend = JSON.parse(readFileSync('frontend/package.json', 'utf8')).version;
+          const project = readFileSync('backend/pyproject.toml', 'utf8')
+            .split(/^\[project\]\s*$/m)[1]?.split(/^\[/m)[0];
+          const backend = project?.match(/^\s*version\s*=\s*["']([^"']+)["']/m)?.[1];
+          const api = readFileSync('backend/src/spaceanalyzer/main.py', 'utf8')
+            .match(/\bversion\s*=\s*["']([^"']+)["']/)?.[1];
+          if ([frontend, backend, api].some(value => value !== version)) {
+            throw new Error('Tag, frontend, backend and API versions must match');
+          }
+
+          const notesPath = `doc/releases/${tag}.md`;
+          const notes = readFileSync(notesPath, 'utf8')
+            .match(/<!-- github-release:start -->\s*([\s\S]*?)\s*<!-- github-release:end -->/);
+          if (!notes || !notes[1].trim()) {
+            throw new Error(`Missing GitHub release notes section in ${notesPath}`);
+          }
+          const sourceUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/blob/${tag}/`;
+          const releaseNotes = notes[1].replace(/(\[[^\]]+\]\()([^\s)]+)(\))/g, (all, start, target, end) => {
+            if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(target)) return all;
+            const [file, anchor] = target.split('#');
+            const relative = path.posix.normalize(file.startsWith('/') ? file.slice(1) : path.posix.join(path.posix.dirname(notesPath), file));
+            if (relative.startsWith('../') || !existsSync(relative)) {
+              throw new Error(`Invalid release notes link: ${target}`);
+            }
+            return start + sourceUrl + relative.split('/').map(encodeURIComponent).join('/') + (anchor ? `#${anchor}` : '') + end;
+          });
+
+          const tracked = execFileSync('git', ['ls-tree', '-rz', '--name-only', 'HEAD'], { encoding: 'utf8' })
+            .split('\0').filter(Boolean);
+          for (const file of tracked) {
+            const parts = file.split('/');
+            const generated = ['.git', '.venv', 'node_modules', '.cache', 'output', 'data', 'dist'];
+            if (parts.some(part => generated.includes(part)) || file.startsWith('.agents/skills/') ||
+                file === 'backend/config/models.toml' || /\.(?:sqlite3?|db|log)(?:-|$)/.test(file) ||
+                (path.posix.basename(file).startsWith('.env') && path.posix.basename(file) !== '.env.example')) {
+              throw new Error(`Refusing to package local or generated file: ${file}`);
+            }
+          }
+          const directory = path.join(process.env.RUNNER_TEMP, `spaceanalyzer-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`);
+          mkdirSync(directory, { recursive: true });
+          const archive = `SpaceAnalyzer-${tag}-source.zip`;
+          execFileSync('git', ['archive', '--format=zip', `--prefix=SpaceAnalyzer-${tag}/`, `--output=${path.join(directory, archive)}`, 'HEAD']);
+          execFileSync('unzip', ['-tqq', path.join(directory, archive)]);
+          const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+          const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          const manifest = {
+            version, tag, source_commit: commit,
+            archive: { filename: archive, sha256: sha256(path.join(directory, archive)), tracked_source_files: tracked.length },
+            validation: { versions_aligned: true, archive_crc: 'passed', local_and_generated_files_excluded: true },
+            workflow_run: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+            runtime_dependencies_bundled: false,
+          };
+          const manifestPath = path.join(directory, 'RELEASE-MANIFEST.json');
+          writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+          writeFileSync(path.join(directory, 'SHA256SUMS.txt'),
+            `${manifest.archive.sha256}  ${archive}\n${sha256(manifestPath)}  RELEASE-MANIFEST.json\n`);
+          writeFileSync(path.join(directory, 'release-notes.md'), releaseNotes.trim() + '\n');
+          appendFileSync(process.env.GITHUB_OUTPUT, `directory=${directory}\nprerelease=${Boolean(match[4])}\n`);
+          NODE
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_DIRECTORY: ${{ steps.package.outputs.directory }}
+          PRERELEASE: ${{ steps.package.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          expected_commit="$(git rev-parse HEAD)"
+          remote_commit="$(gh api "repos/${GH_REPO}/commits/${RELEASE_TAG}" --jq '.sha')"
+          if [[ "$remote_commit" != "$expected_commit" ]]; then
+            echo 'The remote tag changed during this workflow; refusing to publish.' >&2
+            exit 1
+          fi
+          assets=(
+            "$RELEASE_DIRECTORY/SpaceAnalyzer-${RELEASE_TAG}-source.zip"
+            "$RELEASE_DIRECTORY/SHA256SUMS.txt"
+            "$RELEASE_DIRECTORY/RELEASE-MANIFEST.json"
+          )
+          flags=()
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$RELEASE_TAG" "${assets[@]}" \
+            --verify-tag \
+            --target "$expected_commit" \
+            --title "SpaceAnalyzer ${RELEASE_TAG}" \
+            --notes-file "$RELEASE_DIRECTORY/release-notes.md" \
+            "${flags[@]}"
