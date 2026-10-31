@@ -4,7 +4,7 @@
 
 支持 Windows 本机开发双进程和构建后的单进程运行：开发时通过 Vite 代理访问 API，构建后由 FastAPI 同源托管前端。当前无需 Docker Compose；容器只能看到挂载路径，不作为本机磁盘扫描的默认运行方式。
 
-本文件名按约定保留为 `COMPOSE.md`。本轮功能位于 `D:/SpaceAnalyzer-agent-worktree` 的 `feat/snapshot-core`，已完成 M1–M4 工程验收，已按任务分别本地提交，尚未合并至主目录 dev；体验本轮功能时应先进入该工作树。
+本文件名按约定保留为 `COMPOSE.md`。本轮功能位于 `D:/SpaceAnalyzer-agent-worktree` 的 `feat/model-workflow`，包含 M1–M4 及 M5 对话实现；M5 真实模型联调待用户配置，已按任务分别本地提交，尚未合并至主目录 dev；体验本轮功能时应先进入该工作树。
 
 ## 环境要求
 
@@ -165,3 +165,19 @@ Ollama 仅允许回环 HTTP 地址与本地 completion 模型，拒绝已声明�
 模型预算使用 `SPACEANALYZER_OLLAMA_CONTEXT_WINDOW`（默认请求 8192）、`SPACEANALYZER_OLLAMA_MAX_OUTPUT_TOKENS`（默认 2048），DeepSeek 对应变量为 `SPACEANALYZER_DEEPSEEK_CONTEXT_WINDOW`（默认未知）和 `SPACEANALYZER_DEEPSEEK_MAX_OUTPUT_TOKENS`（默认 2048）。本轮 workflow 单次实际输出上限为 2048，并限制输入至 24000 UTF-8 字节预算，预留输出与协议开销；这是保守应用预算，不是精确 tokenizer 计数。小上下文模型可能因证据超预算被明确拒绝，不静默截断。
 
 Ollama 请求显式发送 num_ctx，默认 8192 是应用请求值，不代表已确认模型或硬件支持。根据实际模型和内存调整，本地最大允许 65536；模型详情声明更小上限时拒绝请求。真实联调前需确认模型名称、Ollama 地址和可用上下文窗口。
+
+M5 对话与快照保存在同一应用数据库中，chat_meta 单独维护对话结构版本，不改变快照 schema 版本。对话含问题、回答、证据和使用量，数据库仍作为本地用户数据排除 Git。每个数据库仅运行一个后端实例，重启后的未完成分析标记为中断失败，不自动重试。
+
+在当前终端设置并替换模型名称后启动后端；应用不自动读取 .env 文件：
+
+```powershell
+$env:SPACEANALYZER_OLLAMA_MODEL = '<本地已安装的模型名称>'
+$env:SPACEANALYZER_OLLAMA_CONTEXT_WINDOW = '8192'
+$env:SPACEANALYZER_DEEPSEEK_MODEL = '<DeepSeek API 模型 ID>'
+# DEEPSEEK_API_KEY 由用户在本机当前终端设置，勿贴到聊天或提交仓库。
+uv run --project backend --frozen uvicorn spaceanalyzer.main:app --host 127.0.0.1 --port 8000
+```
+
+可以只配置其中一家供应商；未安装 Ollama 模型时请自行准备，应用不自动拉取。配置错误在 `/api/models` 中返回脱敏诊断。显式 POST `/api/models/{key}/check` 可以检查连接，真正生成仍需合成快照上的联调。
+
+对话事件 GET `/api/runs/{id}/events?after=<序号>` 返回 SSE，也接受 Last-Event-ID。断线重连只重放已保存事件；显式取消调用 POST `/api/runs/{id}/cancel`。上游是否立即停止计算或计费不能由本地取消保证。首版不自动重试生成；失败后用户再次提交使用新的请求键。

@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-31",
+  "environment": "Windows Chrome; built React and FastAPI; synthetic snapshot",
+  "model": "injected no-network fixture adapter",
+  "real_provider_requests": 0,
+  "checks": {
+    "streaming_answer": true,
+    "evidence_navigation": true,
+    "history_after_reload": true,
+    "cancel_partial_answer": true,
+    "cloud_consent_gate": true,
+    "desktop_scroll_width": 1600,
+    "desktop_viewport_width": 1600,
+    "mobile_scroll_width": 390,
+    "mobile_viewport_width": 390,
+    "console_errors": 0,
+    "console_warnings": 0
+  },
+  "screenshots": [
+    "output/playwright/m5/desktop.png",
+    "output/playwright/m5/mobile.png"
+  ],
+  "status": "awaiting real DeepSeek and Ollama configuration"
+}
